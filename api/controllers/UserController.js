@@ -94,18 +94,34 @@ const UserController = () => {
   }
 
   const getUserActivities = async (req, res) => {
-    const id = req.token.id;
-    const date = moment(new Date()).startOf('day').toDate();
-    console.log("^^^^", date, id)
+    const { query, token } = req;
+    console.log("query", query)
+    const id = token.id;
+    const start_date = query.startDate? moment(query.startDate) : moment(new Date()).startOf('day').toDate();
+    const end_date = query.endDate ? moment(query.endDate).add(1,'day') : ""
+    let activities = []
     try {
-      const activities = await Activity.findAll({
-        where: {
-          userId: id,
-          createdAt: {
-            [Op.gte]: date,
-          },
-        }
-      });;
+      if(end_date){
+        activities = await Activity.findAll({
+          where: {
+            userId: id,
+            createdAt: {
+              [Op.gte]: start_date,
+              [Op.lte]: end_date,
+            },
+          }
+        });;
+      }else{
+        activities = await Activity.findAll({
+          where: {
+            userId: id,
+            createdAt: {
+              [Op.gte]: start_date,
+            },
+          }
+        });;
+      }
+      
       return res.status(200).json({ activities });
     } catch (err) {
       console.log(err);
