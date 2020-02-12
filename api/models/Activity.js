@@ -1,43 +1,45 @@
-const Sequelize = require('sequelize');
-
-const sequelize = require('../../config/database');
+const Sequelize = require("sequelize");
+const bcryptService = require("../services/bcrypt.service");
+const Note = require("./Note");
+const sequelize = require("../../config/database");
+const DataTypes = Sequelize.DataTypes;
 
 const hooks = {
-
+  beforeCreate(user) {
+    user.password = bcryptService().password(user); // eslint-disable-line no-param-reassign
+  }
 };
 
-const tableName = 'activities';
+const tableName = "activities";
 
-const Activity = sequelize.define('Activity', {
+const User = require("./User");
+
+const Activity = sequelize.define(
+  "Activity",
+  {
     title: {
-        type: Sequelize.STRING,
+      type: Sequelize.STRING
     },
     caturedAt: {
-        type: Sequelize.DATE,
+      type: Sequelize.DATE
     },
-    userId: {
-        type: Sequelize.INTEGER,
-        onDelete: 'CASCADE',
-        references: {
-            model: 'users',
-            key: 'id',
-            as: 'userId'
-        }
+    image: {
+      type: Sequelize.STRING
     },
-    image:{
-        type: Sequelize.STRING
+    windowName: {
+      type: Sequelize.STRING
     }
-}, { hooks, tableName });
+  },
+  { hooks, tableName }
+);
 
-Activity.associate = function (models) {
-    Activity.belongsTo(models.users, {
-        foreignKey: 'userId',
-        onDelete: 'CASCADE'
-    }),
-    Activity.hasOne(models.notes, {
-        foreignKey: 'activityId',
-        onDelete: 'CASCADE'
-    })
+// eslint-disable-next-line
+Activity.prototype.toJSON = function() {
+  const values = Object.assign({}, this.get());
+
+  return values;
 };
+
+Activity.hasMany(Note);
 
 module.exports = Activity;

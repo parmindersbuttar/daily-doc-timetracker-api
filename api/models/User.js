@@ -12,6 +12,9 @@ const hooks = {
 
 const tableName = 'users';
 
+
+const Activity = require('./Activity')
+
 const User = sequelize.define('User', {
   email: {
     type: Sequelize.STRING,
@@ -38,15 +41,8 @@ User.prototype.toJSON = function () {
   return values;
 };
 
-User.associate = function (models) {
-  User.hasMany(models.activities, {
-    foreignKey: 'userId',
-    onDelete: 'CASCADE'
-  }),
-  User.hasOne(models.notes, {
-    foreignKey: 'userId',
-    onDelete: 'CASCADE'
-  })
-};
+ User.hasMany(Activity,{
+  foreignKey: 'UserId'
+ })
 
 module.exports = User;

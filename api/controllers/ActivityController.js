@@ -1,4 +1,5 @@
 
+const User = require('../models/User');
 const Activity = require('../models/Activity');
 const authService = require('../services/auth.service');
 const fs = require('fs');
@@ -9,6 +10,7 @@ const ActivityController = () => {
 
     const createActivity = async (req, res) => {
         const { body, token } = req;
+       
         try {
             const image = req.body.image;
             const directory = path.join(__dirname + `/../uploads/users/${token.id}`);
@@ -18,13 +20,15 @@ const ActivityController = () => {
             if (!fs.existsSync(directory)) {
                 fs.mkdirSync(directory);
             }
+            console.log('check requtest',body)
             fs.writeFile(filepath, image.replace(/^data:image\/(png|gif|jpeg);base64,/, ''), 'base64', async (err) => {
                 if (err) console.log(err);
                 const activity = await Activity.create({
-                    title: body.email,
+                    title: body.title,
                     caturedAt: body.capturedAt,
-                    userId: token.id,
+                    UserId: token.id,
                     image: url,
+                    windowName: body.windowName
                 });
                 if (!activity) {
                     return res.status(400).json({ msg: 'Bad Request: Activity creation failed' });
