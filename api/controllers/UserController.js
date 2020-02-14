@@ -102,6 +102,7 @@ const UserController = () => {
           .startOf("day")
           .toDate();
     const end_date = query.endDate ? moment(query.endDate).add(1, "day") : "";
+    
     let activities = [];
     let noteCount = [];
     try {
@@ -111,9 +112,10 @@ const UserController = () => {
             userId: id,
             createdAt: {
               [Op.gte]: start_date,
-              [Op.lte]: end_date
+               [Op.lte]: end_date 
             }
-          }
+          },
+          include: [Note]
         });
       } else {
         activities = await Activity.findAll({
