@@ -14,6 +14,7 @@ const tableName = 'users';
 
 
 const Activity = require('./Activity')
+const Plan = require('./Plan')
 
 const User = sequelize.define('User', {
   email: {

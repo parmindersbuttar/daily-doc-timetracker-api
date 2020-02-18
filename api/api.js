@@ -41,6 +41,8 @@ app.use(helmet({
 // parsing the request bodys
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({limit: '10mb', extended: true}));
+app.use(express.static(path.join(__dirname, '/uploads')));
+app.use(express.static(path.join(__dirname, 'frontend/build')));
 
 // secure your private routes with jwt authentication middleware
 app.all('/private/*', (req, res, next) => auth(req, res, next));
@@ -48,7 +50,10 @@ app.all('/private/*', (req, res, next) => auth(req, res, next));
 // fill routes for express application
 app.use('/public', mappedOpenRoutes);
 app.use('/private', mappedAuthRoutes);
-app.use(express.static(path.join(__dirname, '/uploads')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend/build/index.html'));
+});
 
 server.listen(config.port, () => {
   if (environment !== 'production' &&
