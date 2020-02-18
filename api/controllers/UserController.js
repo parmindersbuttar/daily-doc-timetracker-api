@@ -1,6 +1,7 @@
 const moment = require("moment");
 const { Op } = require("sequelize");
 const User = require("../models/User");
+const Plan = require("../models/Plan");
 const Activity = require("../models/Activity");
 const authService = require("../services/auth.service");
 const bcryptService = require("../services/bcrypt.service");
@@ -9,12 +10,21 @@ const Note = require("../models/Note");
 const UserController = () => {
   const register = async (req, res) => {
     const { body } = req;
+    let trialPlanDays = 14;
+    let expiryDate = null;
 
     if (body.password === body.confirmPassword) {
+      expiryDate = moment(new Date())
+        .add(trialPlanDays, "days")
+        .toDate();
+
       try {
         const user = await User.create({
           email: body.email,
-          password: body.password
+          password: body.password,
+          planId: body.planId,
+          premium: body.premium || false,
+          planExpiryDate: expiryDate
         });
         const token = authService().issue({ id: user.id });
 
@@ -102,7 +112,7 @@ const UserController = () => {
           .startOf("day")
           .toDate();
     const end_date = query.endDate ? moment(query.endDate).add(1, "day") : "";
-    
+
     let activities = [];
     let noteCount = [];
     try {
@@ -112,7 +122,7 @@ const UserController = () => {
             userId: id,
             createdAt: {
               [Op.gte]: start_date,
-               [Op.lte]: end_date 
+              [Op.lte]: end_date
             }
           },
           include: [Note]
