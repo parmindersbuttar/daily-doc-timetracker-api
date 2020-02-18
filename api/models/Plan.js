@@ -18,6 +18,9 @@ const Plan = sequelize.define(
     price: {
       type: Sequelize.FLOAT
     },
+    currency: {
+      type: Sequelize.STRING
+    },
     validity: {
       type: Sequelize.INTEGER
     }

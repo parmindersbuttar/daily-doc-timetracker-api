@@ -1,29 +1,29 @@
 const development = {
-  database: 'timeTracker',
-  username: 'root',
-  password: 'Admin@123',
-  host: 'localhost',
-  dialect: 'mysql',
+  database: "timeTracker",
+  username: "timetracker",
+  password: "Tim$Tr@Ck$r@123",
+  host: "localhost",
+  dialect: "mysql"
 };
 
 const testing = {
-  database: 'databasename',
-  username: 'username',
-  password: 'password',
-  host: 'localhost',
-  dialect: 'sqlite' || 'mysql' || 'postgres',
+  database: "databasename",
+  username: "username",
+  password: "password",
+  host: "localhost",
+  dialect: "sqlite" || "mysql" || "postgres"
 };
 
 const production = {
   database: process.env.DB_NAME,
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
-  host: process.env.DB_HOST || 'localhost',
-  dialect: 'sqlite' || 'mysql' || 'postgres',
+  host: process.env.DB_HOST || "localhost",
+  dialect: "sqlite" || "mysql" || "postgres"
 };
 
 module.exports = {
   development,
   testing,
-  production,
+  production
 };
