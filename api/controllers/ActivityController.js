@@ -30,6 +30,7 @@ const ActivityController = () => {
           const userId = token.id;
           let currentPoints = 0;
           let prevPoints = 0;
+          let prevWindow = "";
           let currentDate = moment().format("YYYY-MM-DD");
 
           const userActivities = await Activity.findAll({
@@ -47,17 +48,28 @@ const ActivityController = () => {
             todayActivities.length &&
             todayActivities[todayActivities.length - 1].points;
 
+          prevWindow =
+            todayActivities.length &&
+            todayActivities[todayActivities.length - 1].windowName;
+
           if (
-            body.windowName &&
+            body.windowName !== undefined &&
             body.windowName !== null &&
             body.windowName !== "" &&
             (body.windowName.toLowerCase() === "facebook" ||
               body.windowName.toLowerCase() === "messenger")
           ) {
             currentPoints = prevPoints > 0 ? prevPoints - 5 : 0;
+          } else if (
+            body.windowName !== undefined &&
+            body.windowName !== null &&
+            body.windowName.toLowerCase() === prevWindow
+          ) {
+            currentPoints = prevPoints + 2;
           } else {
             currentPoints = prevPoints + 5;
           }
+
           const activity = await Activity.create({
             title: body.title,
             capturedAt: body.capturedAt,
