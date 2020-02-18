@@ -20,7 +20,7 @@ const Activity = sequelize.define(
     title: {
       type: Sequelize.STRING
     },
-    caturedAt: {
+    capturedAt: {
       type: Sequelize.DATE
     },
     image: {
@@ -28,6 +28,9 @@ const Activity = sequelize.define(
     },
     windowName: {
       type: Sequelize.STRING
+    },
+    points: {
+      type: Sequelize.FLOAT
     }
   },
   { hooks, tableName }
