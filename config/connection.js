@@ -1,7 +1,7 @@
 const development = {
   database: 'timeTracker',
   username: 'root',
-  password: 'root',
+  password: 'Admin@123',
   host: 'localhost',
   dialect: 'mysql',
 };

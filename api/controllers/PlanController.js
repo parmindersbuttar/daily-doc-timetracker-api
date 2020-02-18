@@ -2,7 +2,7 @@ const Plan = require("../models/Plan");
 
 const PlanController = () => {
   const createPlan = async (req, res) => {
-    const { body, token } = req;
+    const { body } = req;
     console.log(body);
     try {
       const plan = await Plan.create({
