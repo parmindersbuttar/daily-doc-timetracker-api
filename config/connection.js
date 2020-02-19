@@ -3,7 +3,8 @@ const development = {
   username: "timetracker",
   password: "Tim$Tr@Ck$r@123",
   host: "localhost",
-  dialect: "mysql"
+  dialect: "mysql",
+  stripeApiKey: "sk_test_Ekic7MilcWatXXX6sk0hR46K00TKet5uTm"
 };
 
 const testing = {
@@ -11,7 +12,8 @@ const testing = {
   username: "username",
   password: "password",
   host: "localhost",
-  dialect: "sqlite" || "mysql" || "postgres"
+  dialect: "sqlite" || "mysql" || "postgres",
+  stripeApiKey: "sk_test_Ekic7MilcWatXXX6sk0hR46K00TKet5uTm"
 };
 
 const production = {
@@ -19,7 +21,8 @@ const production = {
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   host: process.env.DB_HOST || "localhost",
-  dialect: "sqlite" || "mysql" || "postgres"
+  dialect: "sqlite" || "mysql" || "postgres",
+  stripeApiKey: "sk_test_Ekic7MilcWatXXX6sk0hR46K00TKet5uTm"
 };
 
 module.exports = {

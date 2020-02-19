@@ -49,6 +49,9 @@ const User = sequelize.define(
         key: "id",
         as: "planId"
       }
+    },
+    stripeCustomerId: {
+      type: Sequelize.STRING
     }
   },
   { hooks, tableName }
