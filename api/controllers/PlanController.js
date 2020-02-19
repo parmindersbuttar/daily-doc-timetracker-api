@@ -8,7 +8,9 @@ const PlanController = () => {
         name: body.name,
         description: body.description,
         price: body.price,
-        validity: body.validity
+        validity: body.validity,
+        feature: body.feature,
+        currency : body.currency
       });
       return res.status(200).json({ plan });
     } catch (err) {
