@@ -1,23 +1,27 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "e140e67738db251fb7f9acd5184c5601",
+    "revision": "5e038d9ed8418447bc3ea0083b0a44aa",
     "url": "/index.html"
   },
   {
-    "revision": "09e785a8b82f4a29ef47",
-    "url": "/static/js/2.ec26fe78.chunk.js"
+    "revision": "0acfe778ba895c17c486",
+    "url": "/static/js/2.44206b43.chunk.js"
   },
   {
     "revision": "0bdc4f0d8b3d84ae6a73bb9902b479ee",
-    "url": "/static/js/2.ec26fe78.chunk.js.LICENSE.txt"
+    "url": "/static/js/2.44206b43.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "438cb94cc4e89f04ac6f",
-    "url": "/static/js/main.47e64e3b.chunk.js"
+    "revision": "a080c69ea08e8ebdb41b",
+    "url": "/static/js/main.b201de1a.chunk.js"
   },
   {
     "revision": "4007ec41e57a7c6e9717",
     "url": "/static/js/runtime-main.a5adf077.js"
+  },
+  {
+    "revision": "9e8df5be5b6f275d56a6868288a37c3c",
+    "url": "/static/media/automatic-tracking.9e8df5be.svg"
   },
   {
     "revision": "850c5773aad9ce90af8083fa3dd660b9",
@@ -36,6 +40,10 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/static/media/chart.014cc8a1.png"
   },
   {
+    "revision": "8874bcf8a957544c804157c2b900af16",
+    "url": "/static/media/check.8874bcf8.svg"
+  },
+  {
     "revision": "fc8d2d12cd95a1c856df6396a7588940",
     "url": "/static/media/coding.fc8d2d12.png"
   },
@@ -48,6 +56,10 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/static/media/discover.d0867f45.svg"
   },
   {
+    "revision": "4228d6eee1b1117343df6809cc5e2e4a",
+    "url": "/static/media/offline-time.4228d6ee.svg"
+  },
+  {
     "revision": "fa7cc5d88daa7a6d9942e362cd4cb133",
     "url": "/static/media/plans.fa7cc5d8.svg"
   },
@@ -58,6 +70,10 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
     "revision": "3c14880c16a2879da79c87e8e367c31a",
     "url": "/static/media/progress.3c14880c.png"
+  },
+  {
+    "revision": "cd0a313249bee5ba6b9f3364a827196a",
+    "url": "/static/media/structured-feature.cd0a3132.svg"
   },
   {
     "revision": "2a14327306e76a8523f3a2c7608d83ce",
@@ -74,6 +90,10 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
     "revision": "ca7d236b942c7d2af48cd2ca34be94f2",
     "url": "/static/media/tracking.ca7d236b.svg"
+  },
+  {
+    "revision": "313a9df923ad5440cfeabeb65e94cd87",
+    "url": "/static/media/trends.313a9df9.svg"
   },
   {
     "revision": "4f1a3836276f360a55ab34168030c1e9",

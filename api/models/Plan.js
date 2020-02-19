@@ -23,6 +23,9 @@ const Plan = sequelize.define(
     },
     validity: {
       type: Sequelize.INTEGER
+    },
+    feature : {
+      type: Sequelize.STRING
     }
   },
   { hooks, tableName }
