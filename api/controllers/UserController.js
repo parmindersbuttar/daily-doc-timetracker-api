@@ -19,14 +19,18 @@ const UserController = () => {
         .toDate();
 
       try {
-        const user = await User.create({
+        let user = await User.create({
           email: body.email,
           password: body.password,
           planId: body.planId,
-          premium: body.premium || false,
+          premium: false,
           planExpiryDate: expiryDate
         });
         const token = authService().issue({ id: user.id });
+
+        let planDetails = await Plan.findByPk(user.planId);
+        user = user.toJSON();
+        user["planDetails"] = planDetails.toJSON();
 
         return res.status(200).json({ token, user });
       } catch (err) {
@@ -43,7 +47,7 @@ const UserController = () => {
 
     if (email && password) {
       try {
-        const user = await User.findOne({
+        let user = await User.findOne({
           where: {
             email
           }
@@ -55,6 +59,10 @@ const UserController = () => {
 
         if (bcryptService().comparePassword(password, user.password)) {
           const token = authService().issue({ id: user.id });
+
+          let planDetails = await Plan.findByPk(user.planId);
+          user = user.toJSON();
+          user["planDetails"] = planDetails.toJSON();
 
           return res.status(200).json({ token, user });
         }

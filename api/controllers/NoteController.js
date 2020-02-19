@@ -3,7 +3,6 @@ const Note = require('../models/Note');
 const NoteController = () => {
     const createNote = async (req, res) => {
         const { body, token } = req;
-        console.log(body)
         try {
             const note = await Note.create({
                 title: body.title,
