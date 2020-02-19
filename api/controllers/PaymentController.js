@@ -1,20 +1,18 @@
 const connection = require("../../config/connection");
-const StripeApi = connection[process.env.NODE_ENV].StripeApiKey;
+const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
 const stripe = require("stripe")(StripeApi);
 const User = require("../models/User");
 
 const PaymentController = () => {
   const createCustomer = async (req, res) => {
     const { body } = req;
+
     try {
       let user = await User.findByPk(req.token.id);
       if (user !== null) user = user.toJSON();
-
       if (user !== null && user.stripeCustomerId === null) {
         const customer = await stripe.customers.create({
-          email: body.email,
-          name: body.name || "",
-          phone: body.phone || ""
+          email: body.email
         });
 
         const updatedUser = await User.update(
