@@ -1,5 +1,6 @@
 const moment = require("moment");
 const { Op } = require("sequelize");
+const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Plan = require("../models/Plan");
 const Activity = require("../models/Activity");
@@ -20,6 +21,7 @@ const UserController = () => {
 
       try {
         let user = await User.create({
+          name: body.name,
           email: body.email,
           password: body.password,
           planId: body.planId,
@@ -27,10 +29,11 @@ const UserController = () => {
           planExpiryDate: expiryDate
         });
         const token = authService().issue({ id: user.id });
+        if (user != null) user = user.toJSON();
 
         let planDetails = await Plan.findByPk(user.planId);
-        user = user.toJSON();
-        user["planDetails"] = planDetails.toJSON();
+        if (planDetails != null) planDetails = planDetails.toJSON();
+        user["planDetails"] = planDetails;
 
         return res.status(200).json({ token, user });
       } catch (err) {
@@ -59,10 +62,11 @@ const UserController = () => {
 
         if (bcryptService().comparePassword(password, user.password)) {
           const token = authService().issue({ id: user.id });
+          if (user != null) user = user.toJSON();
 
           let planDetails = await Plan.findByPk(user.planId);
-          user = user.toJSON();
-          user["planDetails"] = planDetails.toJSON();
+          if (planDetails != null) planDetails = planDetails.toJSON();
+          user["planDetails"] = planDetails;
 
           return res.status(200).json({ token, user });
         }
@@ -79,13 +83,21 @@ const UserController = () => {
       .json({ msg: "Bad Request: Email or password is wrong" });
   };
 
-  const validate = (req, res) => {
+  const validate = async (req, res) => {
     const { token } = req.body;
+    let user = null;
+    if (token) {
+      const decoded = jwt.decode(token);
+      if (decoded.id) {
+        user = await fetchUserDetailedData(decoded.id);
+      }
+    }
+
     authService().verify(token, err => {
       if (err) {
         return res.status(401).json({ isvalid: false, err: "Invalid Token!" });
       }
-      return res.status(200).json({ isvalid: true });
+      return res.status(200).json({ isvalid: true, user });
     });
   };
 
@@ -102,7 +114,7 @@ const UserController = () => {
 
   const getUserDetail = async (req, res) => {
     try {
-      const user = await User.findByPk(req.token.id);
+      let user = await fetchUserDetailedData(req.token.id);
       return res.status(200).json({ user });
     } catch (err) {
       console.log(err);
@@ -152,6 +164,15 @@ const UserController = () => {
       console.log(err);
       return res.status(500).json({ msg: "Internal server error" });
     }
+  };
+
+  const fetchUserDetailedData = async userId => {
+    let user = await User.findByPk(userId);
+    if (user != null) user = user.toJSON();
+    let planDetails = await Plan.findByPk(user.planId);
+    if (planDetails != null) planDetails = planDetails.toJSON();
+    user["planDetails"] = planDetails;
+    return user;
   };
 
   return {
