@@ -24,7 +24,7 @@ const PaymentController = () => {
       } else if (user !== null) {
         return res
           .status(500)
-          .json({ error: "Customer already exists with this Email" });
+          .json({ error: "Customer already exist with this Email" });
       } else {
         return res.status(404).json({ error: "User Not Found for this Email" });
       }

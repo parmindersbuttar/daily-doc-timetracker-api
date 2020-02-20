@@ -167,12 +167,17 @@ const UserController = () => {
   };
 
   const fetchUserDetailedData = async userId => {
-    let user = await User.findByPk(userId);
-    if (user != null) user = user.toJSON();
-    let planDetails = await Plan.findByPk(user.planId);
-    if (planDetails != null) planDetails = planDetails.toJSON();
-    user["planDetails"] = planDetails;
-    return user;
+    try {
+      let user = await User.findByPk(userId);
+      if (user != null) user = user.toJSON();
+      let planDetails = await Plan.findByPk(user.planId);
+      if (planDetails != null) planDetails = planDetails.toJSON();
+      user["planDetails"] = planDetails;
+      console.log("hlo");
+      return user;
+    } catch (err) {
+      return err;
+    }
   };
 
   return {
