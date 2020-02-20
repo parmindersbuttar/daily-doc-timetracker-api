@@ -13,7 +13,7 @@ const hooks = {
 const tableName = "users";
 
 const Activity = require("./Activity");
-const Plan = require("./Plan");
+const PaymentMethods = require("./PaymentMethods");
 
 const User = sequelize.define(
   "User",
@@ -67,6 +67,10 @@ User.prototype.toJSON = function() {
 };
 
 User.hasMany(Activity, {
+  foreignKey: "UserId"
+});
+
+User.hasMany(PaymentMethods, {
   foreignKey: "UserId"
 });
 

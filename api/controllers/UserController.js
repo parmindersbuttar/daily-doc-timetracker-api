@@ -7,11 +7,15 @@ const Activity = require("../models/Activity");
 const authService = require("../services/auth.service");
 const bcryptService = require("../services/bcrypt.service");
 const Note = require("../models/Note");
+const PaymentController = require("../controllers/PaymentController");
+const PaymentMethods = require("../models/PaymentMethods");
 
 const UserController = () => {
   const register = async (req, res) => {
     const { body } = req;
-    let trialPlanDays = 14;
+    const { card } = body;
+    let token;
+    let trialPlanDays = 7;
     let expiryDate = null;
 
     if (body.password === body.confirmPassword) {
@@ -20,25 +24,65 @@ const UserController = () => {
         .toDate();
 
       try {
-        let user = await User.create({
-          name: body.name,
-          email: body.email,
-          password: body.password,
-          planId: body.planId,
-          premium: false,
-          planExpiryDate: expiryDate
+        if (!body.email || body.email === "")
+          return res.status(500).json({ error: "Invalid Email" });
+
+        const isUserExist = await User.findAll({
+          where: {
+            email: body.email
+          }
         });
-        const token = authService().issue({ id: user.id });
-        if (user != null) user = user.toJSON();
 
-        let planDetails = await Plan.findByPk(user.planId);
-        if (planDetails != null) planDetails = planDetails.toJSON();
-        user["planDetails"] = planDetails;
+        if (isUserExist && isUserExist.length) {
+          return res.status(500).json({ error: "Email must be unique" });
+        }
 
-        return res.status(200).json({ token, user });
+        const resultCustomer = await PaymentController().createCustomer(body);
+
+        if (resultCustomer.hasOwnProperty("id")) {
+          let user = await User.create({
+            name: body.name,
+            email: body.email,
+            password: body.password,
+            planId: body.planId,
+            premium: false,
+            planExpiryDate: expiryDate,
+            stripeCustomerId: resultCustomer.id
+          });
+
+          if (user !== null) {
+            user = user.toJSON();
+          }
+
+          token = authService().issue({ id: user.id });
+          const cardResult = await PaymentMethods.create({
+            name: card.name,
+            type: card.type,
+            active: 1,
+            last4: card.last4,
+            exp_month: card.exp_month,
+            exp_year: card.exp_year,
+            brand: card.brand,
+            UserId: user.id
+          });
+
+          if (cardResult && cardResult.id) {
+            user["cardId"] = cardResult.id;
+          }
+
+          return res.status(200).json({ token, user });
+        } else {
+          return res.status(400).json({
+            error:
+              resultCustomer.raw && resultCustomer.raw.message
+                ? resultCustomer.raw.message
+                : resultCustomer
+          });
+        }
       } catch (err) {
-        console.log(err);
-        return res.status(500).json({ msg: "Internal server error" });
+        return res
+          .status(500)
+          .json({ msg: "Internal Server Error"});
       }
     }
 
@@ -62,11 +106,12 @@ const UserController = () => {
 
         if (bcryptService().comparePassword(password, user.password)) {
           const token = authService().issue({ id: user.id });
-          if (user != null) user = user.toJSON();
-
-          let planDetails = await Plan.findByPk(user.planId);
-          if (planDetails != null) planDetails = planDetails.toJSON();
-          user["planDetails"] = planDetails;
+          if (user != null) {
+            user = user.toJSON();
+            let planDetails = await Plan.findByPk(user.planId);
+            if (planDetails != null) planDetails = planDetails.toJSON();
+            user["planDetails"] = planDetails;
+          }
 
           return res.status(200).json({ token, user });
         }
@@ -169,11 +214,12 @@ const UserController = () => {
   const fetchUserDetailedData = async userId => {
     try {
       let user = await User.findByPk(userId);
-      if (user != null) user = user.toJSON();
-      let planDetails = await Plan.findByPk(user.planId);
-      if (planDetails != null) planDetails = planDetails.toJSON();
-      user["planDetails"] = planDetails;
-      console.log("hlo");
+      if (user != null) {
+        user = user.toJSON();
+        let planDetails = await Plan.findByPk(user.planId);
+        if (planDetails != null) planDetails = planDetails.toJSON();
+        user["planDetails"] = planDetails;
+      }
       return user;
     } catch (err) {
       return err;
