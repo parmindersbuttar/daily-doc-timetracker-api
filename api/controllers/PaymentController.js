@@ -1,4 +1,3 @@
-const { Op } = require("sequelize");
 const connection = require("../../config/connection");
 const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
 const stripe = require("stripe")(StripeApi);

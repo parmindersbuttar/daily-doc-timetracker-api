@@ -1,5 +1,6 @@
 const moment = require("moment");
 const { Op } = require("sequelize");
+const nodemailer = require("nodemailer");
 var uuid = require("uuid");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -10,6 +11,9 @@ const bcryptService = require("../services/bcrypt.service");
 const Note = require("../models/Note");
 const PaymentController = require("../controllers/PaymentController");
 const PaymentMethods = require("../models/PaymentMethods");
+const connection = require("../../config/connection");
+const EMAIL = connection[process.env.NODE_ENV].emailId;
+const EMAILPASSWORD = connection[process.env.NODE_ENV].emailPassword;
 
 const UserController = () => {
   const register = async (req, res) => {
@@ -258,6 +262,8 @@ const UserController = () => {
           }
         );
 
+        await sendEmail(user, resetPasswordToken);
+        
         return res.status(200).json({
           success: true,
           token: resetPasswordToken,
@@ -267,13 +273,36 @@ const UserController = () => {
         console.log(err);
         return res
           .status(500)
-          .json({ success: false, error: "Internal server error" });
+          .json({ success: false, error: "Internal server error", err: err });
       }
     }
 
     return res
       .status(400)
       .json({ success: false, error: "Bad Request: Email is wrong" });
+  };
+
+  const sendEmail = async (user, resetToken) => {
+    const transporter = await nodemailer.createTransport({
+      service: "gmail",
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false,
+      auth: {
+        user: EMAIL,
+        pass: EMAILPASSWORD
+      }
+    });
+
+    const result = await transporter.sendMail({
+      from: '"Scotty Lefkowitz" <dailydocapp@gmail.com>',
+      to: user.email,
+      subject: "Reset Password Email",
+      text: resetToken,
+      html: "<b>This Is a Password Reset Email</b>"
+    });
+
+    return result;
   };
 
   const resetPassword = async (req, res) => {
@@ -316,6 +345,7 @@ const UserController = () => {
     getUserDetail,
     getUserActivities,
     recoverPassword,
+    sendEmail,
     resetPassword
   };
 };
