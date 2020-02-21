@@ -239,7 +239,7 @@ const UserController = () => {
         if (!user) {
           return res
             .status(404)
-            .json({ error: "User not found with this Email" });
+            .json({ success: false, error: "User not found with this Email" });
         }
 
         await User.update(
@@ -252,14 +252,20 @@ const UserController = () => {
           }
         );
 
-        return res.status(200).json({ token: resetPasswordToken });
+        return res
+          .status(200)
+          .json({ success: true, token: resetPasswordToken });
       } catch (err) {
         console.log(err);
-        return res.status(500).json({ error: "Internal server error" });
+        return res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
     }
 
-    return res.status(400).json({ error: "Bad Request: Email is wrong" });
+    return res
+      .status(400)
+      .json({ success: false, error: "Bad Request: Email is wrong" });
   };
 
   const resetPassword = async (req, res) => {
