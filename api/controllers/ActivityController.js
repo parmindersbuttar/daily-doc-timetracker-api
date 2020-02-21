@@ -1,7 +1,8 @@
 const moment = require("moment");
+const { Op } = require("sequelize");
 const User = require("../models/User");
 const Activity = require("../models/Activity");
-const authService = require("../services/auth.service");
+const RestrictedActivity = require("../models/RestrictedActivity");
 const fs = require("fs");
 const uuidv4 = require("uuid/v4");
 const path = require("path");
@@ -44,28 +45,32 @@ const ActivityController = () => {
               return item;
           });
 
-          prevPoints =
-            todayActivities.length &&
-            todayActivities[todayActivities.length - 1].points;
+          prevPoints = todayActivities.length
+            ? todayActivities[todayActivities.length - 1].points
+            : 0;
 
-          prevWindow =
-            todayActivities.length &&
-            todayActivities[todayActivities.length - 1].windowName;
+          prevWindow = todayActivities.length
+            ? todayActivities[todayActivities.length - 1].windowName
+            : "";
+
+          const restricted =
+            body.windowName === ""
+              ? []
+              : await RestrictedActivity.findAll({
+                  where: {
+                    name: {
+                      [Op.like]: `%${body.windowName}%`
+                    }
+                  }
+                });
 
           if (
-            body.windowName !== undefined &&
-            body.windowName !== null &&
-            body.windowName !== "" &&
-            (body.windowName.toLowerCase() === "facebook" ||
-              body.windowName.toLowerCase() === "messenger")
-          ) {
-            currentPoints = prevPoints > 0 ? prevPoints - 5 : 0;
-          } else if (
-            body.windowName !== undefined &&
-            body.windowName !== null &&
-            body.windowName.toLowerCase() === prevWindow
+            body.windowName.toLowerCase() === prevWindow.toLowerCase() &&
+            restricted.length === 0
           ) {
             currentPoints = prevPoints + 2;
+          } else if (restricted.length > 0) {
+            currentPoints = prevPoints >= 5 ? prevPoints - 5 : 0;
           } else {
             currentPoints = prevPoints + 5;
           }
