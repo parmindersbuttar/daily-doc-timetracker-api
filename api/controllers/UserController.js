@@ -35,7 +35,7 @@ const UserController = () => {
         });
 
         if (isUserExist && isUserExist.length) {
-          return res.status(500).json({ error: "Email must be unique" });
+          return res.status(400).json({ error: "Email must be unique" });
         }
 
         const resultCustomer = await PaymentController().createCustomer(body);
@@ -67,13 +67,15 @@ const UserController = () => {
             UserId: user.id
           });
 
+          // TODO add includes
+
           if (cardResult && cardResult.id) {
             user["cardId"] = cardResult.id;
           }
 
           return res.status(200).json({ token, user });
         } else {
-          return res.status(400).json({
+          return res.status(500).json({
             error:
               resultCustomer.raw && resultCustomer.raw.message
                 ? resultCustomer.raw.message
@@ -81,15 +83,19 @@ const UserController = () => {
           });
         }
       } catch (err) {
-        return res.status(500).json({ msg: "Internal Server Error" });
+        return res.status(500).json({ error: "Internal Server Error" });
       }
     }
 
-    return res.status(400).json({ msg: "Bad Request: Passwords don't match" });
+    return res
+      .status(400)
+      .json({ error: "Bad Request: Passwords don't match" });
   };
 
   const login = async (req, res) => {
     const { email, password } = req.body;
+
+    // TODO use includes
 
     if (email && password) {
       try {
@@ -252,9 +258,11 @@ const UserController = () => {
           }
         );
 
-        return res
-          .status(200)
-          .json({ success: true, token: resetPasswordToken });
+        return res.status(200).json({
+          success: true,
+          token: resetPasswordToken,
+          msg: `Email has been sent on your Email Id`
+        });
       } catch (err) {
         console.log(err);
         return res
@@ -273,31 +281,31 @@ const UserController = () => {
 
     if (reset_token && password) {
       try {
-        const user = await User.findOne({ where: { resetToken: reset_token } });
-
-        if (!user) {
-          return res.status(500).json({ error: "Invalid Token" });
-        }
-
-        const updatedUser = await User.update(
+        await User.update(
           { password: password, resetToken: null },
           {
             where: {
-              id: user.id
-            }
+              resetToken: reset_token
+            },
+            individualHooks: true
           }
         );
 
-        return res.status(200).json({ success: true, user: updatedUser });
+        return res
+          .status(200)
+          .json({ success: true, msg: "Password Reset Successfully" });
       } catch (err) {
         console.log(err);
-        return res.status(500).json({ error: "Internal server error" });
+        return res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
     }
 
-    return res
-      .status(400)
-      .json({ error: "Bad Request: Reset token and Password are required" });
+    return res.status(400).json({
+      success: false,
+      error: "Bad Request: Reset token and Password are required"
+    });
   };
 
   return {

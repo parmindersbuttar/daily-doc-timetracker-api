@@ -9,11 +9,7 @@ const hooks = {
     user.password = bcryptService().password(user);
   },
   beforeUpdate(user, options) {
-    // options.individualHooks = true;
-    user = user.toJSON()
-    console.log(user);
-
-    user.password = bcryptService().password(user); 
+    user.password = bcryptService().password(user);
   }
 };
 
