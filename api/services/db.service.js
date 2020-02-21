@@ -88,7 +88,7 @@ const dbService = (environment, migrate) => {
     }
   };
 
-  const addSeeds = async () => {
+  const addRestrictedActivitySeeds = async () => {
     const restrictedWebsites = [
       { name: "www.43things.com" },
       { name: "www.4chan.org" },
@@ -486,19 +486,19 @@ const dbService = (environment, migrate) => {
     switch (environment) {
       case "development":
         await startDev();
-        await addSeeds();
+        await addRestrictedActivitySeeds();
         break;
       case "staging":
         await startStage();
-        await addSeeds();
+        await addRestrictedActivitySeeds();
         break;
       case "testing":
         await startTest();
-        await addSeeds();
+        await addRestrictedActivitySeeds();
         break;
       case "production":
         await startProd();
-        await addSeeds();
+        await addRestrictedActivitySeeds();
         break;
       default:
         await wrongEnvironment();
