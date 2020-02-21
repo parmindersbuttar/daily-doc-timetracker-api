@@ -262,8 +262,8 @@ const UserController = () => {
           }
         );
 
-        await sendEmail(user, resetPasswordToken);
-        
+        await sendEmail(req, user, resetPasswordToken);
+
         return res.status(200).json({
           success: true,
           token: resetPasswordToken,
@@ -282,7 +282,8 @@ const UserController = () => {
       .json({ success: false, error: "Bad Request: Email is wrong" });
   };
 
-  const sendEmail = async (user, resetToken) => {
+  const sendEmail = async (req, user, resetToken) => {
+    console.log('hlooooo',req.headers.host)
     const transporter = await nodemailer.createTransport({
       service: "gmail",
       host: "smtp.ethereal.email",
@@ -299,7 +300,11 @@ const UserController = () => {
       to: user.email,
       subject: "Reset Password Email",
       text: resetToken,
-      html: "<b>This Is a Password Reset Email</b>"
+      html: `
+
+        <b><a href='https://dailydoc.app/reset-password/${resetToken}'>This Is a Password Reset Email</a></b>
+
+      `
     });
 
     return result;
