@@ -1,5 +1,6 @@
 const moment = require("moment");
 const { Op } = require("sequelize");
+var uuid = require("uuid");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Plan = require("../models/Plan");
@@ -80,9 +81,7 @@ const UserController = () => {
           });
         }
       } catch (err) {
-        return res
-          .status(500)
-          .json({ msg: "Internal Server Error"});
+        return res.status(500).json({ msg: "Internal Server Error" });
       }
     }
 
@@ -141,7 +140,10 @@ const UserController = () => {
     authService().verify(token, err => {
       if (err) {
         return res.status(401).json({ isvalid: false, err: "Invalid Token!" });
+      } else if (user === null) {
+        return res.status(401).json({ isvalid: false, err: "Invalid Token!" });
       }
+
       return res.status(200).json({ isvalid: true, user });
     });
   };
@@ -226,13 +228,81 @@ const UserController = () => {
     }
   };
 
+  const recoverPassword = async (req, res) => {
+    const { email } = req.body;
+
+    if (email) {
+      try {
+        const resetPasswordToken = uuid.v4();
+        const user = await User.findOne({ where: { email } });
+
+        if (!user) {
+          return res
+            .status(404)
+            .json({ error: "User not found with this Email" });
+        }
+
+        await User.update(
+          { resetToken: resetPasswordToken },
+          {
+            where: {
+              email
+            },
+            individualHooks: true
+          }
+        );
+
+        return res.status(200).json({ token: resetPasswordToken });
+      } catch (err) {
+        console.log(err);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    }
+
+    return res.status(400).json({ error: "Bad Request: Email is wrong" });
+  };
+
+  const resetPassword = async (req, res) => {
+    const { reset_token, password } = req.body;
+
+    if (reset_token && password) {
+      try {
+        const user = await User.findOne({ where: { resetToken: reset_token } });
+
+        if (!user) {
+          return res.status(500).json({ error: "Invalid Token" });
+        }
+
+        const updatedUser = await User.update(
+          { password: password, resetToken: null },
+          {
+            where: {
+              id: user.id
+            }
+          }
+        );
+
+        return res.status(200).json({ success: true, user: updatedUser });
+      } catch (err) {
+        console.log(err);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+    }
+
+    return res
+      .status(400)
+      .json({ error: "Bad Request: Reset token and Password are required" });
+  };
+
   return {
     register,
     login,
     validate,
     getAll,
     getUserDetail,
-    getUserActivities
+    getUserActivities,
+    recoverPassword,
+    resetPassword
   };
 };
 

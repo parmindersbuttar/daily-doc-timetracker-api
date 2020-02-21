@@ -6,7 +6,14 @@ const DataTypes = Sequelize.DataTypes;
 
 const hooks = {
   beforeCreate(user) {
-    user.password = bcryptService().password(user); // eslint-disable-line no-param-reassign
+    user.password = bcryptService().password(user);
+  },
+  beforeUpdate(user, options) {
+    // options.individualHooks = true;
+    user = user.toJSON()
+    console.log(user);
+
+    user.password = bcryptService().password(user); 
   }
 };
 
@@ -51,6 +58,9 @@ const User = sequelize.define(
       }
     },
     stripeCustomerId: {
+      type: Sequelize.STRING
+    },
+    resetToken: {
       type: Sequelize.STRING
     }
   },
