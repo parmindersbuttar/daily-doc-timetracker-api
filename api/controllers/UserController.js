@@ -1,6 +1,7 @@
 const moment = require("moment");
 const { Op } = require("sequelize");
 const nodemailer = require("nodemailer");
+var url = require("url");
 var uuid = require("uuid");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -20,7 +21,7 @@ const UserController = () => {
     const { body } = req;
     const { card } = body;
     let token;
-    let trialPlanDays = 7;
+    let trialPlanDays = 1;
     let expiryDate = null;
 
     if (body.password === body.confirmPassword) {
@@ -283,7 +284,7 @@ const UserController = () => {
   };
 
   const sendEmail = async (req, user, resetToken) => {
-    console.log('hlooooo',req.headers.host)
+    const url = fullUrl(req);
     const transporter = await nodemailer.createTransport({
       service: "gmail",
       host: "smtp.ethereal.email",
@@ -296,14 +297,12 @@ const UserController = () => {
     });
 
     const result = await transporter.sendMail({
-      from: '"Scotty Lefkowitz" <dailydocapp@gmail.com>',
+      from: `"Scotty Lefkowitz" <${EMAIL}>`,
       to: user.email,
       subject: "Reset Password Email",
       text: resetToken,
       html: `
-
-        <b><a href='https://dailydoc.app/reset-password/${resetToken}'>This Is a Password Reset Email</a></b>
-
+        <b><a href='${url}/reset-password/${resetToken}'>Click here to Reset Password</a></b>
       `
     });
 
@@ -315,7 +314,7 @@ const UserController = () => {
 
     if (reset_token && password) {
       try {
-        await User.update(
+        const updatedUser = await User.update(
           { password: password, resetToken: null },
           {
             where: {
@@ -325,9 +324,13 @@ const UserController = () => {
           }
         );
 
-        return res
-          .status(200)
-          .json({ success: true, msg: "Password Reset Successfully" });
+        if (updatedUser[0] > 0) {
+          return res
+            .status(200)
+            .json({ success: true, msg: "Password Reset Successfully" });
+        } else {
+          return res.status(500).json({ success: false, msg: "Invalid Token" });
+        }
       } catch (err) {
         console.log(err);
         return res
@@ -339,6 +342,13 @@ const UserController = () => {
     return res.status(400).json({
       success: false,
       error: "Bad Request: Reset token and Password are required"
+    });
+  };
+
+  const fullUrl = req => {
+    return url.format({
+      protocol: req.protocol,
+      host: req.get("host")
     });
   };
 
