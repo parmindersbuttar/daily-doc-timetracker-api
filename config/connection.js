@@ -4,7 +4,7 @@ const development = {
   password: "Tim$Tr@Ck$r@123",
   host: "localhost",
   dialect: "mysql",
-  stripeApiKey: "sk_test_Ekic7MilcWatXXX6sk0hR46K00TKet5uTm",
+  stripeApiKey: "sk_test_eld7kXhDPjw8QlcfHfxDZvTA00ghT2stUG",
   emailId: "dailydocapp@gmail.com",
   emailPassword: "scotty1999"
 };

@@ -1,9 +1,10 @@
 const moment = require("moment");
 const { Op } = require("sequelize");
 const nodemailer = require("nodemailer");
-var url = require("url");
-var uuid = require("uuid");
+const url = require("url");
+const uuid = require("uuid");
 const jwt = require("jsonwebtoken");
+const cron = require("node-cron");
 const User = require("../models/User");
 const Plan = require("../models/Plan");
 const Activity = require("../models/Activity");
@@ -72,13 +73,16 @@ const UserController = () => {
             UserId: user.id
           });
 
-          // TODO add includes
+          const userData = await User.findAll({
+            where: {
+              id: user.id
+            },
+            include: [Plan, PaymentMethods]
+          });
 
-          if (cardResult && cardResult.id) {
-            user["cardId"] = cardResult.id;
-          }
-
-          return res.status(200).json({ token, user });
+          return res
+            .status(200)
+            .json({ token, user: userData.length ? userData[0] : null });
         } else {
           return res.status(500).json({
             error:
@@ -100,30 +104,22 @@ const UserController = () => {
   const login = async (req, res) => {
     const { email, password } = req.body;
 
-    // TODO use includes
-
     if (email && password) {
       try {
-        let user = await User.findOne({
+        let user = await User.findAll({
           where: {
             email
-          }
+          },
+          include: [Plan]
         });
 
-        if (!user) {
+        if (!user.length) {
           return res.status(400).json({ msg: "Bad Request: User not found" });
         }
 
-        if (bcryptService().comparePassword(password, user.password)) {
-          const token = authService().issue({ id: user.id });
-          if (user != null) {
-            user = user.toJSON();
-            let planDetails = await Plan.findByPk(user.planId);
-            if (planDetails != null) planDetails = planDetails.toJSON();
-            user["planDetails"] = planDetails;
-          }
-
-          return res.status(200).json({ token, user });
+        if (bcryptService().comparePassword(password, user[0].password)) {
+          const token = authService().issue({ id: user[0].id });
+          return res.status(200).json({ token, user: user[0] });
         }
 
         return res.status(401).json({ msg: "Unauthorized" });
@@ -151,11 +147,11 @@ const UserController = () => {
     authService().verify(token, err => {
       if (err) {
         return res.status(401).json({ isvalid: false, err: "Invalid Token!" });
-      } else if (user === null) {
-        return res.status(401).json({ isvalid: false, err: "Invalid Token!" });
+      } else if (!user.length) {
+        return res.status(401).json({ isvalid: false, err: "Invalid User!" });
       }
 
-      return res.status(200).json({ isvalid: true, user });
+      return res.status(200).json({ isvalid: true, user: user[0] });
     });
   };
 
@@ -226,14 +222,7 @@ const UserController = () => {
 
   const fetchUserDetailedData = async userId => {
     try {
-      let user = await User.findByPk(userId);
-      if (user != null) {
-        user = user.toJSON();
-        let planDetails = await Plan.findByPk(user.planId);
-        if (planDetails != null) planDetails = planDetails.toJSON();
-        user["planDetails"] = planDetails;
-      }
-      return user;
+      return await User.findAll({ where: { id: userId }, include: [Plan] });
     } catch (err) {
       return err;
     }
@@ -284,7 +273,8 @@ const UserController = () => {
   };
 
   const sendEmail = async (req, user, resetToken) => {
-    const url = fullUrl(req);
+    scheduleCronCharge()
+    const url = getURL(req);
     const transporter = await nodemailer.createTransport({
       service: "gmail",
       host: "smtp.ethereal.email",
@@ -297,7 +287,7 @@ const UserController = () => {
     });
 
     const result = await transporter.sendMail({
-      from: `"Scotty Lefkowitz" <${EMAIL}>`,
+      from: `"Scotty Lefkowitz" ${EMAIL}`,
       to: user.email,
       subject: "Reset Password Email",
       text: resetToken,
@@ -345,10 +335,16 @@ const UserController = () => {
     });
   };
 
-  const fullUrl = req => {
+  const getURL = req => {
     return url.format({
       protocol: req.protocol,
       host: req.get("host")
+    });
+  };
+
+  const scheduleCronCharge = data => {
+    cron.schedule("* * * *", () => {
+      console.log("running a task every Hour");
     });
   };
 

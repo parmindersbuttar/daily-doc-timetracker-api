@@ -3,6 +3,9 @@ const bcryptService = require("../services/bcrypt.service");
 
 const sequelize = require("../../config/database");
 const DataTypes = Sequelize.DataTypes;
+const Activity = require("./Activity");
+const Plan = require("./Plan");
+const PaymentMethods = require("./PaymentMethods");
 
 const hooks = {
   beforeCreate(user) {
@@ -14,9 +17,6 @@ const hooks = {
 };
 
 const tableName = "users";
-
-const Activity = require("./Activity");
-const PaymentMethods = require("./PaymentMethods");
 
 const User = sequelize.define(
   "User",
@@ -43,16 +43,7 @@ const User = sequelize.define(
       type: Sequelize.BOOLEAN,
       defaultValue: false
     },
-    planId: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      onDelete: "CASCADE",
-      references: {
-        model: "plans",
-        key: "id",
-        as: "planId"
-      }
-    },
+
     stripeCustomerId: {
       type: Sequelize.STRING
     },
@@ -78,6 +69,12 @@ User.hasMany(Activity, {
 
 User.hasMany(PaymentMethods, {
   foreignKey: "UserId"
+});
+
+User.belongsTo(Plan, {
+  foreignKey: {
+    name: "planId"
+  }
 });
 
 module.exports = User;
