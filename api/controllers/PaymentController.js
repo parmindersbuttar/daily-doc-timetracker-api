@@ -3,6 +3,7 @@ const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
 const stripe = require("stripe")(StripeApi);
 const User = require("../models/User");
 const PaymentMethods = require("../models/PaymentMethods");
+const Sequelize = require("sequelize");
 
 const PaymentController = () => {
   // const createCard = async (req, res) => {
@@ -61,7 +62,7 @@ const PaymentController = () => {
     }
   };
 
-  const createCustomer1 = async (req, res) => {
+  const createCharge = async (req, res) => {
     const { body } = req;
 
     try {
@@ -93,7 +94,7 @@ const PaymentController = () => {
 
   return {
     createCustomer,
-    createCustomer1
+    createCharge
   };
 };
 

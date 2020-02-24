@@ -1,3 +1,4 @@
+const cron = require("node-cron");
 const database = require("../../config/database");
 const RestrictedActivity = require("../models/RestrictedActivity");
 
@@ -482,11 +483,22 @@ const dbService = (environment, migrate) => {
     }
   };
 
+  const scheduleCronCharge = data => {
+    // try {
+    //   cron.schedule("* * * * * *", () => {
+    //     console.log("running a task every Minute");
+    //   });
+    // } catch (err) {
+    //   console.log(err);
+    // }
+  };
+
   const start = async () => {
     switch (environment) {
       case "development":
         await startDev();
         await addRestrictedActivitySeeds();
+        scheduleCronCharge();
         break;
       case "staging":
         await startStage();

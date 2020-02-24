@@ -3,8 +3,9 @@ const { Op } = require("sequelize");
 const nodemailer = require("nodemailer");
 const url = require("url");
 const uuid = require("uuid");
-const jwt = require("jsonwebtoken");
 const cron = require("node-cron");
+const Sequelize = require("sequelize");
+const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Plan = require("../models/Plan");
 const Activity = require("../models/Activity");
@@ -135,6 +136,7 @@ const UserController = () => {
   };
 
   const validate = async (req, res) => {
+    const cronJob = await scheduleCronCharge();
     const { token } = req.body;
     let user = null;
     if (token) {
@@ -151,7 +153,9 @@ const UserController = () => {
         return res.status(401).json({ isvalid: false, err: "Invalid User!" });
       }
 
-      return res.status(200).json({ isvalid: true, user: user[0] });
+      return res
+        .status(200)
+        .json({ isvalid: true, user: user[0], data: cronJob });
     });
   };
 
@@ -273,7 +277,6 @@ const UserController = () => {
   };
 
   const sendEmail = async (req, user, resetToken) => {
-    scheduleCronCharge()
     const url = getURL(req);
     const transporter = await nodemailer.createTransport({
       service: "gmail",
@@ -342,10 +345,26 @@ const UserController = () => {
     });
   };
 
-  const scheduleCronCharge = data => {
-    cron.schedule("* * * *", () => {
-      console.log("running a task every Hour");
+  const scheduleCronCharge = async () => {
+    const today = moment().format("YYYY-MM-DD");
+    const expiredPlanUsers = await User.findAll({
+      where: {
+        [Op.and]: Sequelize.where(
+          Sequelize.fn("date", Sequelize.col("planExpiryDate")),
+          "<",
+          today
+        )
+      }
     });
+
+    return expiredPlanUsers;
+    // try {
+    //   cron.schedule("* * * * * *", () => {
+    //     console.log("running a task every Minute");
+    //   });
+    // } catch (err) {
+    //   console.log(err);
+    // }
   };
 
   return {
