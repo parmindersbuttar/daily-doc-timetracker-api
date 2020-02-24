@@ -31,6 +31,10 @@ const PaymentMethods = sequelize.define(
     brand: {
       type: Sequelize.STRING,
       allowNull: false
+    },
+    source: {
+      type: Sequelize.STRING,
+      allowNull: false
     }
   },
   { hooks, tableName }

@@ -62,33 +62,22 @@ const PaymentController = () => {
     }
   };
 
-  const createCharge = async (req, res) => {
-    const { body } = req;
-
+  const createCharge = async user => {
     try {
-      let user = await User.findByPk(req.token.id);
-      if (user !== null) user = user.toJSON();
-      if (user !== null && user.stripeCustomerId === null) {
-        const customer = await stripe.customers.create({
-          email: body.email
-        });
+      const paymenDetail = {
+        amount: user.Plan.price * 100,
+        currency: "USD",
+        source: user.PaymentMethods[0].source,
+        description: "My First Test ",
+        customer: user.stripeCustomerId
+      };
+      const charges = await stripe.charges.create(paymenDetail);
+      console.log(charges);
 
-        const updatedUser = await User.update(
-          { stripeCustomerId: customer.id },
-          { where: { id: user.id } }
-        );
-
-        return res.status(200).json({ updatedUser });
-      } else if (user !== null) {
-        return res
-          .status(500)
-          .json({ error: "Customer already exist with this Email" });
-      } else {
-        return res.status(404).json({ error: "User Not Found for this Email" });
-      }
+      return charges;
     } catch (err) {
       console.log(err);
-      return res.json({ error: err });
+      return err;
     }
   };
 

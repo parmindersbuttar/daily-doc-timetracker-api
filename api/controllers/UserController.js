@@ -6,15 +6,16 @@ const uuid = require("uuid");
 const cron = require("node-cron");
 const Sequelize = require("sequelize");
 const jwt = require("jsonwebtoken");
+const connection = require("../../config/connection");
 const User = require("../models/User");
 const Plan = require("../models/Plan");
+const Note = require("../models/Note");
+const PaymentMethods = require("../models/PaymentMethods");
 const Activity = require("../models/Activity");
 const authService = require("../services/auth.service");
 const bcryptService = require("../services/bcrypt.service");
-const Note = require("../models/Note");
 const PaymentController = require("../controllers/PaymentController");
-const PaymentMethods = require("../models/PaymentMethods");
-const connection = require("../../config/connection");
+
 const EMAIL = connection[process.env.NODE_ENV].emailId;
 const EMAILPASSWORD = connection[process.env.NODE_ENV].emailPassword;
 
@@ -71,7 +72,8 @@ const UserController = () => {
             exp_month: card.exp_month,
             exp_year: card.exp_year,
             brand: card.brand,
-            UserId: user.id
+            UserId: user.id,
+            source: body.card.id
           });
 
           const userData = await User.findAll({
@@ -136,7 +138,6 @@ const UserController = () => {
   };
 
   const validate = async (req, res) => {
-    const cronJob = await scheduleCronCharge();
     const { token } = req.body;
     let user = null;
     if (token) {
@@ -346,25 +347,40 @@ const UserController = () => {
   };
 
   const scheduleCronCharge = async () => {
-    const today = moment().format("YYYY-MM-DD");
-    const expiredPlanUsers = await User.findAll({
-      where: {
-        [Op.and]: Sequelize.where(
-          Sequelize.fn("date", Sequelize.col("planExpiryDate")),
-          "<",
-          today
-        )
-      }
-    });
+    try {
+      cron.schedule("*/59 * * * *", async () => {
+        console.log("running a task every Hour");
+        const today = moment().format("YYYY-MM-DD");
+        const expiredPlanUsers = await User.findAll({
+          where: {
+            [Op.and]: Sequelize.where(
+              Sequelize.fn("date", Sequelize.col("planExpiryDate")),
+              "<",
+              today
+            ),
+            premium: false
+          },
+          include: [Plan, PaymentMethods]
+        });
 
-    return expiredPlanUsers;
-    // try {
-    //   cron.schedule("* * * * * *", () => {
-    //     console.log("running a task every Minute");
-    //   });
-    // } catch (err) {
-    //   console.log(err);
-    // }
+        return expiredPlanUsers.forEach(async user => {
+          let result = await PaymentController().createCharge(user);
+          if (result.hasOwnProperty("id")) {
+            await User.update(
+              { premium: true },
+              {
+                where: {
+                  id: user.id
+                }
+              }
+            );
+          }
+        });
+      });
+    } catch (err) {
+      console.log(err);
+      return err;
+    }
   };
 
   return {
@@ -376,7 +392,8 @@ const UserController = () => {
     getUserActivities,
     recoverPassword,
     sendEmail,
-    resetPassword
+    resetPassword,
+    scheduleCronCharge
   };
 };
 
