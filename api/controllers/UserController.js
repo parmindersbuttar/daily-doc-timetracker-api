@@ -154,9 +154,7 @@ const UserController = () => {
         return res.status(401).json({ isvalid: false, err: "Invalid User!" });
       }
 
-      return res
-        .status(200)
-        .json({ isvalid: true, user: user[0], data: cronJob });
+      return res.status(200).json({ isvalid: true, user: user[0] });
     });
   };
 
@@ -349,7 +347,10 @@ const UserController = () => {
   const scheduleCronCharge = async () => {
     try {
       cron.schedule("*/59 * * * *", async () => {
-        console.log("running a task every Hour");
+        console.log(
+          "Checking expired plan of user every Hour and make a payment",
+          "Current Time" + moment().format("YYYY-MM-DD HH:mm:ss")
+        );
         const today = moment().format("YYYY-MM-DD");
         const expiredPlanUsers = await User.findAll({
           where: {
@@ -358,7 +359,8 @@ const UserController = () => {
               "<",
               today
             ),
-            premium: false
+            premium: false,
+            subscriptionActive: true
           },
           include: [Plan, PaymentMethods]
         });
@@ -366,21 +368,63 @@ const UserController = () => {
         return expiredPlanUsers.forEach(async user => {
           let result = await PaymentController().createCharge(user);
           if (result.hasOwnProperty("id")) {
-            await User.update(
-              { premium: true },
+            const expiryDate = moment(new Date())
+              .add(30, "days")
+              .toDate();
+
+            const updatedUser = await User.update(
+              { premium: true, planExpiryDate: expiryDate },
               {
                 where: {
                   id: user.id
                 }
               }
             );
+
+            if (updatedUser[0] > 0) {
+              sendSubscriptionEmail(result, user);
+            }
+          } else if (result.error) {
+            const subscriptionErr =
+              result.error.raw && result.error.raw.message
+                ? result.error.raw.message
+                : result.error;
+
+            sendSubscriptionEmail(subscriptionErr, user);
           }
         });
       });
     } catch (err) {
-      console.log(err);
-      return err;
+      console.log(err.raw && err.raw.message ? err.raw.message : err);
+      return err.raw && err.raw.message ? err.raw.message : err;
     }
+  };
+
+  const sendSubscriptionEmail = async (data, user) => {
+    const transporter = await nodemailer.createTransport({
+      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: EMAIL,
+        pass: EMAILPASSWORD
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"Scotty Lefkowitz" ${EMAIL}`,
+      to: user.email,
+      subject: "Subscription Payment",
+      text: "",
+      html: `
+        <b> ${
+          data.id
+            ? "Your Payment for this month has been deducted"
+            : "Error : " + data
+        }</b>
+      `
+    });
   };
 
   return {
@@ -393,7 +437,8 @@ const UserController = () => {
     recoverPassword,
     sendEmail,
     resetPassword,
-    scheduleCronCharge
+    scheduleCronCharge,
+    sendSubscriptionEmail
   };
 };
 

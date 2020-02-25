@@ -1,6 +1,5 @@
 const Sequelize = require("sequelize");
 const bcryptService = require("../services/bcrypt.service");
-
 const sequelize = require("../../config/database");
 const DataTypes = Sequelize.DataTypes;
 const Activity = require("./Activity");
@@ -43,12 +42,18 @@ const User = sequelize.define(
       type: Sequelize.BOOLEAN,
       defaultValue: false
     },
-
     stripeCustomerId: {
       type: Sequelize.STRING
     },
     resetToken: {
       type: Sequelize.STRING
+    },
+    subscriptionId: {
+      type: Sequelize.STRING
+    },
+    subscriptionActive: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: true
     }
   },
   { hooks, tableName }

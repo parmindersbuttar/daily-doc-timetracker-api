@@ -54,7 +54,7 @@ const PaymentController = () => {
     try {
       const customer = await stripe.customers.create({
         email: body.email,
-        source: (card && card.id) || ""
+        source: card.id
       });
       return customer;
     } catch (err) {
@@ -63,27 +63,72 @@ const PaymentController = () => {
   };
 
   const createCharge = async user => {
+    const activePaymentMethod = user.PaymentMethods.filter(
+      item => item.active === true
+    );
     try {
-      const paymenDetail = {
+      stripeProductPlan = await stripe.plans.create({
         amount: user.Plan.price * 100,
-        currency: "USD",
-        source: user.PaymentMethods[0].source,
-        description: "My First Test ",
-        customer: user.stripeCustomerId
-      };
-      const charges = await stripe.charges.create(paymenDetail);
-      console.log(charges);
+        currency: "usd",
+        interval: "month",
+        product: { name: user.Plan.name }
+      });
 
-      return charges;
+      const stripeSuscription = await stripe.subscriptions.create({
+        customer: user.stripeCustomerId,
+        items: [{ plan: stripeProductPlan.id }],
+        default_payment_method: activePaymentMethod[0].source
+      });
+
+      const updatedUser = await User.update(
+        {
+          subscriptionId: stripeSuscription.id
+        },
+        {
+          where: {
+            id: user.id
+          }
+        }
+      );
+
+      return stripeSuscription;
     } catch (err) {
       console.log(err);
-      return err;
+      return {
+        error: !err.raw && err.raw.message ? err.raw.message : err,
+        user: user
+      };
+    }
+  };
+
+  const cancelSubscription = async (req, res) => {
+    const subId = req.body.subId;
+    const userId = req.token.id;
+    try {
+      const result = await stripe.subscriptions.del(subId);
+      if (result.hasOwnProperty("id")) {
+        const updatedUser = await User.update(
+          { subscriptionActive: false },
+          { where: { id: userId } }
+        );
+
+        return res.status(200).json({
+          success: true,
+          message: "Subscription Canceled Successfully",
+          updatedUser
+        });
+      }
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ success: false, err: error.raw ? error.raw.message : error });
     }
   };
 
   return {
     createCustomer,
-    createCharge
+    createCharge,
+    cancelSubscription
   };
 };
 
