@@ -64,6 +64,8 @@ User.prototype.toJSON = function() {
   const values = Object.assign({}, this.get());
 
   delete values.password;
+  delete values.resetToken;
+  delete values.stripeCustomerId;
 
   return values;
 };

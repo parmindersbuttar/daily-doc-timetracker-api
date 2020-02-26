@@ -118,7 +118,7 @@ const UserController = () => {
           where: {
             email
           },
-          include: [Plan]
+          include: [Plan, PaymentMethods]
         });
 
         if (!user.length) {
@@ -232,7 +232,7 @@ const UserController = () => {
     try {
       return await User.findAll({
         where: { id: userId },
-        include: [Plan],
+        include: [Plan, PaymentMethods],
         attributes: { exclude: ["subscriptionId", "stripeCustomerId"] }
       });
     } catch (err) {
