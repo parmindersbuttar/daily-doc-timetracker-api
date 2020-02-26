@@ -404,12 +404,12 @@ const UserController = () => {
 
   const cronChargeStart = () => {
     const start = scheduleCronCharge.start();
-    console.log("Stripe charges chron job Started", start);
+    console.log("Stripe charges chron job Started - status : ", start.status);
   };
 
   const cronChargeStop = () => {
     const stop = scheduleCronCharge.stop();
-    console.log("Stripe charges chron job stopped", stop);
+    console.log("Stripe charges chron job stopped  - status : ", stop.status);
   };
 
   const sendSubscriptionEmail = async (data, user) => {
