@@ -101,7 +101,7 @@ const PaymentController = () => {
   };
 
   const cancelSubscription = async (req, res) => {
-    const subId = req.body.subId;
+    const subId = req.body.subscriptionId;
     const userId = req.token.id;
     try {
       const result = await stripe.subscriptions.del(subId);

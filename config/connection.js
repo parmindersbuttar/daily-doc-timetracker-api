@@ -4,7 +4,7 @@ const development = {
   password: "Tim$Tr@Ck$r@123",
   host: "localhost",
   dialect: "mysql",
-  stripeApiKey: "sk_test_eld7kXhDPjw8QlcfHfxDZvTA00ghT2stUG",
+  stripeApiKey: "sk_test_Ekic7MilcWatXXX6sk0hR46K00TKet5uTm",
   emailId: "dailydocapp@gmail.com",
   emailPassword: "scotty1999"
 };
@@ -15,7 +15,7 @@ const testing = {
   password: "password",
   host: "localhost",
   dialect: "sqlite" || "mysql" || "postgres",
-  stripeApiKey: "sk_test_eld7kXhDPjw8QlcfHfxDZvTA00ghT2stUG",
+  stripeApiKey: "sk_test_Ekic7MilcWatXXX6sk0hR46K00TKet5uTm",
   emailId: "dailydocapp@gmail.com",
   emailPassword: "scotty1999"
 };
@@ -26,7 +26,7 @@ const production = {
   password: process.env.DB_PASS,
   host: process.env.DB_HOST || "localhost",
   dialect: "sqlite" || "mysql" || "postgres",
-  stripeApiKey: "sk_test_eld7kXhDPjw8QlcfHfxDZvTA00ghT2stUG",
+  stripeApiKey: "sk_test_Ekic7MilcWatXXX6sk0hR46K00TKet5uTm",
   emailId: "dailydocapp@gmail.com",
   emailPassword: "scotty1999"
 };
