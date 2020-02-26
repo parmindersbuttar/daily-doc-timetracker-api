@@ -4,7 +4,7 @@ const development = {
   password: "Tim$Tr@Ck$r@123",
   host: "localhost",
   dialect: "mysql",
-  stripeApiKey: process.env.STRIPEAPIKEY,
+  stripeApiKey: process.env.STRIPESECRETAPIKEY,
   emailId: process.env.EMAILID,
   emailPassword: process.env.EMAILPASSWORD
 };
@@ -15,7 +15,7 @@ const testing = {
   password: "password",
   host: "localhost",
   dialect: "sqlite" || "mysql" || "postgres",
-  stripeApiKey: process.env.STRIPEAPIKEY,
+  stripeApiKey: process.env.STRIPESECRETAPIKEY,
   emailId: process.env.EMAILID,
   emailPassword: process.env.EMAILPASSWORD
 };
@@ -26,7 +26,7 @@ const production = {
   password: process.env.DB_PASS,
   host: process.env.DB_HOST || "localhost",
   dialect: "sqlite" || "mysql" || "postgres",
-  stripeApiKey: process.env.STRIPEAPIKEY,
+  stripeApiKey: process.env.STRIPESECRETAPIKEY,
   emailId: process.env.EMAILID,
   emailPassword: process.env.EMAILPASSWORD
 };
