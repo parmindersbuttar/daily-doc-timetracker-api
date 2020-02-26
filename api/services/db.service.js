@@ -1,7 +1,5 @@
-const cron = require("node-cron");
 const database = require("../../config/database");
 const RestrictedActivity = require("../models/RestrictedActivity");
-const UserController = require("../controllers/UserController");
 
 const dbService = (environment, migrate) => {
   const authenticateDB = () => database.authenticate();
@@ -30,7 +28,6 @@ const dbService = (environment, migrate) => {
       await syncDB();
       successfulDBStart();
       await addRestrictedActivitySeeds();
-      scheduleCronChargeStart();
     } catch (err) {
       errorDBStart(err);
     }
@@ -484,10 +481,6 @@ const dbService = (environment, migrate) => {
     } catch (err) {
       console.log(err);
     }
-  };
-
-  const scheduleCronChargeStart = () => {
-    UserController().cronChargeStart();
   };
 
   const start = async () => {

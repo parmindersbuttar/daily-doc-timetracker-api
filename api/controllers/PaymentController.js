@@ -1,9 +1,12 @@
+const moment = require("moment");
+const nodemailer = require("nodemailer");
 const connection = require("../../config/connection");
 const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
 const stripe = require("stripe")(StripeApi);
 const User = require("../models/User");
-const PaymentMethods = require("../models/PaymentMethods");
-const Sequelize = require("sequelize");
+
+const EMAIL = connection[process.env.NODE_ENV].emailId;
+const EMAILPASSWORD = connection[process.env.NODE_ENV].emailPassword;
 
 const PaymentController = () => {
   // const createCard = async (req, res) => {
@@ -66,6 +69,7 @@ const PaymentController = () => {
     const activePaymentMethod = user.PaymentMethods.filter(
       item => item.active === true
     );
+
     try {
       stripeProductPlan = await stripe.plans.create({
         amount: user.Plan.price * 100,
@@ -77,12 +81,20 @@ const PaymentController = () => {
       const stripeSuscription = await stripe.subscriptions.create({
         customer: user.stripeCustomerId,
         items: [{ plan: stripeProductPlan.id }],
-        default_payment_method: activePaymentMethod[0].source
+        default_payment_method: activePaymentMethod[0].source,
+        trial_period_days: 1
       });
+
+      const expireTrialEpoch = stripeSuscription.trial_end;
+
+      const expiryTrialDate = moment
+        .unix(expireTrialEpoch)
+        .format("YYYY-MM-DD HH:mm:ss");
 
       const updatedUser = await User.update(
         {
-          subscriptionId: stripeSuscription.id
+          subscriptionId: stripeSuscription.id,
+          planExpiryDate: expiryTrialDate
         },
         {
           where: {
@@ -90,6 +102,10 @@ const PaymentController = () => {
           }
         }
       );
+
+      if (updatedUser[0] > 0) {
+        await sendSubscriptionEmail(stripeSuscription, user);
+      }
       return stripeSuscription;
     } catch (err) {
       console.log(err);
@@ -98,6 +114,33 @@ const PaymentController = () => {
         user: user
       };
     }
+  };
+
+  const sendSubscriptionEmail = async (data, user) => {
+    const transporter = await nodemailer.createTransport({
+      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: EMAIL,
+        pass: EMAILPASSWORD
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"Scotty Lefkowitz" ${EMAIL}`,
+      to: user.email,
+      subject: "Subscription Payment",
+      text: "",
+      html: `
+        <b> ${
+          data.id
+            ? "Your Payment for this month has been deducted"
+            : "Error : " + data
+        }</b>
+      `
+    });
   };
 
   const cancelSubscription = async (req, res) => {

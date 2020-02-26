@@ -59,7 +59,6 @@ app.get("*", (req, res) => {
 });
 
 server.listen(config.port, () => {
-  const UserController = require("./controllers/UserController");
 
   if (
     environment !== "production" &&
@@ -71,7 +70,6 @@ server.listen(config.port, () => {
     );
     process.exit(1);
   }
-  UserController().cronChargeStop();
   return DB;
 });
 
@@ -80,9 +78,7 @@ server.on("error", e => {
 });
 
 server.on("close", e => {
-  const UserController = require("./controllers/UserController");
   console.log("Stopping ...");
-  UserController().cronChargeStop();
 });
 
 process.on("SIGINT", function() {

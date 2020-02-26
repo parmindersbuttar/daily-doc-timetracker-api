@@ -36,6 +36,7 @@ const UserController = () => {
         if (!body.email || body.email === "")
           return res.status(500).json({ error: "Invalid Email" });
 
+        // is user exist
         const isUserExist = await User.findAll({
           where: {
             email: body.email
@@ -46,24 +47,23 @@ const UserController = () => {
           return res.status(400).json({ error: "Email must be unique" });
         }
 
+        // Create Stripe Customer
         const resultCustomer = await PaymentController().createCustomer(body);
 
         if (resultCustomer.hasOwnProperty("id")) {
+          // Add user to DB
           let user = await User.create({
             name: body.name,
             email: body.email,
             password: body.password,
             planId: body.planId,
             premium: false,
-            planExpiryDate: expiryDate,
             stripeCustomerId: resultCustomer.id
           });
 
-          if (user !== null) {
-            user = user.toJSON();
-          }
-
           token = authService().issue({ id: user.id });
+
+          // Add payment Method to DB
           const cardResult = await PaymentMethods.create({
             name: card.name,
             type: card.type,
@@ -76,12 +76,17 @@ const UserController = () => {
             source: body.card.id
           });
 
+          // Fetch user detailed data
           const userData = await User.findAll({
             where: {
               id: user.id
             },
             include: [Plan, PaymentMethods]
           });
+          console.log("userData", userData);
+
+          // Create Subscription with one Day trial Period
+          await PaymentController().createCharge(userData[0]);
 
           return res
             .status(200)
@@ -225,7 +230,11 @@ const UserController = () => {
 
   const fetchUserDetailedData = async userId => {
     try {
-      return await User.findAll({ where: { id: userId }, include: [Plan] });
+      return await User.findAll({
+        where: { id: userId },
+        include: [Plan],
+        attributes: { exclude: ["subscriptionId", "stripeCustomerId"] }
+      });
     } catch (err) {
       return err;
     }
@@ -344,101 +353,6 @@ const UserController = () => {
     });
   };
 
-  const scheduleCronCharge = cron.schedule(
-    "* * * * *",
-    async () => {
-      try {
-        console.log(
-          "Checking expired plan of user every Hour and make a payment",
-          "Current Time" + moment().format("YYYY-MM-DD HH:mm:ss")
-        );
-        const today = moment().format("YYYY-MM-DD");
-        const expiredPlanUsers = await User.findAll({
-          where: {
-            [Op.and]: Sequelize.where(
-              Sequelize.fn("date", Sequelize.col("planExpiryDate")),
-              "<",
-              today
-            ),
-            premium: false,
-            subscriptionActive: true
-          },
-          include: [Plan, PaymentMethods]
-        });
-
-        return expiredPlanUsers.forEach(async user => {
-          let result = await PaymentController().createCharge(user);
-          if (result.hasOwnProperty("id")) {
-            const expiryDate = moment(new Date())
-              .add(30, "days")
-              .toDate();
-
-            const updatedUser = await User.update(
-              { premium: true, planExpiryDate: expiryDate },
-              {
-                where: {
-                  id: user.id
-                }
-              }
-            );
-
-            if (updatedUser[0] > 0) {
-              sendSubscriptionEmail(result, user);
-            }
-          } else if (result.error) {
-            const subscriptionErr =
-              result.error.raw && result.error.raw.message
-                ? result.error.raw.message
-                : result.error;
-                
-            sendSubscriptionEmail(subscriptionErr, user);
-          }
-        });
-      } catch (err) {
-        console.log(err.raw && err.raw.message ? err.raw.message : err);
-        return err.raw && err.raw.message ? err.raw.message : err;
-      }
-    },
-    { scheduled: false }
-  );
-
-  const cronChargeStart = () => {
-    const start = scheduleCronCharge.start();
-    console.log("Stripe charges chron job Started - status : ", start.status);
-  };
-
-  const cronChargeStop = () => {
-    const stop = scheduleCronCharge.stop();
-    console.log("Stripe charges chron job stopped  - status : ", stop.status);
-  };
-
-  const sendSubscriptionEmail = async (data, user) => {
-    const transporter = await nodemailer.createTransport({
-      service: "gmail",
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: EMAIL,
-        pass: EMAILPASSWORD
-      }
-    });
-
-    await transporter.sendMail({
-      from: `"Scotty Lefkowitz" ${EMAIL}`,
-      to: user.email,
-      subject: "Subscription Payment",
-      text: "",
-      html: `
-        <b> ${
-          data.id
-            ? "Your Payment for this month has been deducted"
-            : "Error : " + data
-        }</b>
-      `
-    });
-  };
-
   return {
     register,
     login,
@@ -448,10 +362,7 @@ const UserController = () => {
     getUserActivities,
     recoverPassword,
     sendEmail,
-    resetPassword,
-    cronChargeStart,
-    cronChargeStop,
-    sendSubscriptionEmail
+    resetPassword
   };
 };
 
