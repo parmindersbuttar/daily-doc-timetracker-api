@@ -29,6 +29,8 @@ const dbService = (environment, migrate) => {
     try {
       await syncDB();
       successfulDBStart();
+      await addRestrictedActivitySeeds();
+      scheduleCronChargeStart();
     } catch (err) {
       errorDBStart(err);
     }
@@ -484,31 +486,23 @@ const dbService = (environment, migrate) => {
     }
   };
 
-  const scheduleCronCharge = () => {
-    UserController().scheduleCronCharge();
+  const scheduleCronChargeStart = () => {
+    UserController().cronChargeStart();
   };
 
   const start = async () => {
     switch (environment) {
       case "development":
         await startDev();
-        await addRestrictedActivitySeeds();
-        scheduleCronCharge();
         break;
       case "staging":
         await startStage();
-        await addRestrictedActivitySeeds();
-        scheduleCronCharge();
         break;
       case "testing":
         await startTest();
-        await addRestrictedActivitySeeds();
-        scheduleCronCharge();
         break;
       case "production":
         await startProd();
-        await addRestrictedActivitySeeds();
-        scheduleCronCharge();
         break;
       default:
         await wrongEnvironment();

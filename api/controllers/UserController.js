@@ -344,9 +344,10 @@ const UserController = () => {
     });
   };
 
-  const scheduleCronCharge = async () => {
-    try {
-      cron.schedule("*/59 * * * *", async () => {
+  const scheduleCronCharge = cron.schedule(
+    "* * * * *",
+    async () => {
+      try {
         console.log(
           "Checking expired plan of user every Hour and make a payment",
           "Current Time" + moment().format("YYYY-MM-DD HH:mm:ss")
@@ -389,15 +390,26 @@ const UserController = () => {
               result.error.raw && result.error.raw.message
                 ? result.error.raw.message
                 : result.error;
-
+                
             sendSubscriptionEmail(subscriptionErr, user);
           }
         });
-      });
-    } catch (err) {
-      console.log(err.raw && err.raw.message ? err.raw.message : err);
-      return err.raw && err.raw.message ? err.raw.message : err;
-    }
+      } catch (err) {
+        console.log(err.raw && err.raw.message ? err.raw.message : err);
+        return err.raw && err.raw.message ? err.raw.message : err;
+      }
+    },
+    { scheduled: false }
+  );
+
+  const cronChargeStart = () => {
+    const start = scheduleCronCharge.start();
+    console.log("Stripe charges chron job Started", start);
+  };
+
+  const cronChargeStop = () => {
+    const stop = scheduleCronCharge.stop();
+    console.log("Stripe charges chron job stopped", stop);
   };
 
   const sendSubscriptionEmail = async (data, user) => {
@@ -437,7 +449,8 @@ const UserController = () => {
     recoverPassword,
     sendEmail,
     resetPassword,
-    scheduleCronCharge,
+    cronChargeStart,
+    cronChargeStop,
     sendSubscriptionEmail
   };
 };

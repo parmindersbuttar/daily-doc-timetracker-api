@@ -90,7 +90,6 @@ const PaymentController = () => {
           }
         }
       );
-
       return stripeSuscription;
     } catch (err) {
       console.log(err);
