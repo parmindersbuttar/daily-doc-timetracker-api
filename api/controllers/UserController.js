@@ -89,7 +89,8 @@ const UserController = () => {
             return res.status(500).json({
               success: false,
               error:
-                "There is some error while saving your card details. Please try after sometime or connect to customer support"
+                "There is some error while saving your card details. Please try after sometime or connect to customer support",
+              msg: stripeSubscriptionResult.error
             });
 
             // return res.status(500).json({
@@ -103,7 +104,8 @@ const UserController = () => {
           return res.status(500).json({
             success: false,
             error:
-              "There is some error while saving your card details. Please try after sometime or connect to customer support"
+              "There is some error while saving your card details. Please try after sometime or connect to customer support",
+            msg: stripeSubscriptionResult.error
           });
           // return res.status(500).json({
           //   success: false,
