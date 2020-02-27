@@ -3,8 +3,6 @@ const { Op } = require("sequelize");
 const nodemailer = require("nodemailer");
 const url = require("url");
 const uuid = require("uuid");
-const cron = require("node-cron");
-const Sequelize = require("sequelize");
 const jwt = require("jsonwebtoken");
 const connection = require("../../config/connection");
 const User = require("../models/User");
@@ -15,7 +13,6 @@ const Activity = require("../models/Activity");
 const authService = require("../services/auth.service");
 const bcryptService = require("../services/bcrypt.service");
 const PaymentController = require("../controllers/PaymentController");
-
 const EMAIL = connection[process.env.NODE_ENV].emailId;
 const EMAILPASSWORD = connection[process.env.NODE_ENV].emailPassword;
 
@@ -64,7 +61,7 @@ const UserController = () => {
           token = authService().issue({ id: user.id });
 
           // Add payment Method to DB
-          const cardResult = await PaymentMethods.create({
+          await PaymentMethods.create({
             name: card.name,
             type: card.type,
             active: 1,
@@ -83,30 +80,55 @@ const UserController = () => {
             },
             include: [Plan, PaymentMethods]
           });
-          console.log("userData", userData);
 
           // Create Subscription with one Day trial Period
-          await PaymentController().createCharge(userData[0]);
+          const stripeSubResult = await PaymentController().createCharge(
+            userData[0]
+          );
+          if (stripeSubResult.result) {
+            return res.status(200).json({
+              success: true,
+              token,
+              user: userData.length ? userData[0] : null
+            });
+          } else if (stripeSubResult.error) {
+            return res.status(500).json({
+              success: false,
+              error:
+                "There is some error while saving your card details. Please try after sometime or connect to customer support"
+            });
 
-          return res
-            .status(200)
-            .json({ token, user: userData.length ? userData[0] : null });
+            // return res.status(500).json({
+            //   success: false,
+            //   error: stripeSubResult.error
+            //     ? stripeSubResult.error.raw.message
+            //     : stripeSubResult.error
+            // });
+          }
         } else {
           return res.status(500).json({
+            success: false,
             error:
-              resultCustomer.raw && resultCustomer.raw.message
-                ? resultCustomer.raw.message
-                : resultCustomer
+              "There is some error while saving your card details. Please try after sometime or connect to customer support"
           });
+          // return res.status(500).json({
+          //   success: false,
+          //   error:
+          //     resultCustomer.raw && resultCustomer.raw.message
+          //       ? resultCustomer.raw.message
+          //       : resultCustomer
+          // });
         }
       } catch (err) {
-        return res.status(500).json({ error: "Internal Server Error" });
+        return res
+          .status(500)
+          .json({ success: false, error: "Internal Server Error" });
       }
     }
 
     return res
       .status(400)
-      .json({ error: "Bad Request: Passwords don't match" });
+      .json({ success: false, error: "Bad Request: Passwords don't match" });
   };
 
   const login = async (req, res) => {

@@ -4,60 +4,23 @@ const connection = require("../../config/connection");
 const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
 const stripe = require("stripe")(StripeApi);
 const User = require("../models/User");
-
 const EMAIL = connection[process.env.NODE_ENV].emailId;
 const EMAILPASSWORD = connection[process.env.NODE_ENV].emailPassword;
 
 const PaymentController = () => {
-  // const createCard = async (req, res) => {
-  //   const { body, token } = req;
-
-  //   try {
-  //     const card = await PaymentMethods.create({
-  //       name: body.name,
-  //       type: body.type,
-  //       active: body.active,
-  //       last4: body.last4,
-  //       exp_month: body.exp_month,
-  //       exp_year: body.exp_year,
-  //       brand: body.brand,
-  //       UserId: token.id
-  //     });
-
-  //     await PaymentMethods.update(
-  //       {
-  //         active: false
-  //       },
-  //       {
-  //         where: {
-  //           id: {
-  //             [Op.not]: card.id
-  //           }
-  //         }
-  //       }
-  //     );
-
-  //     return res.status(200).json({ card });
-  //   } catch (err) {
-  //     if (err.name == "SequelizeValidationError") {
-  //       return res.status(400).json({
-  //         error: err.errors.length ? err.errors[0].message : err.errors
-  //       });
-  //     } else if (err.name == "SequelizeDatabaseError") {
-  //       return res.status(400).json({
-  //         error: err.parent.sqlMessage
-  //       });
-  //     }
-  //     return res.status(500).json({ error: err });
-  //   }
-  // };
-
   const createCustomer = async body => {
     const { card } = body;
     try {
       const customer = await stripe.customers.create({
         email: body.email,
-        source: card.id
+        source: card.id,
+        name: body.name,
+        address: {
+          line1: body.addressLine1 || "510 Townsend St",
+          postal_code: body.postalCode || "98140",
+          state: body.state || "CA",
+          country: body.country || "US"
+        }
       });
       return customer;
     } catch (err) {
@@ -85,7 +48,7 @@ const PaymentController = () => {
         trial_period_days: 1
       });
 
-      const expireTrialEpoch = stripeSuscription.trial_end;
+      const expireTrialEpoch = stripeSuscription.current_period_end;
 
       const expiryTrialDate = moment
         .unix(expireTrialEpoch)
@@ -103,10 +66,12 @@ const PaymentController = () => {
         }
       );
 
+      const newUpdatedUser = await User.findByPk(user.id);
+
       if (updatedUser[0] > 0) {
-        await sendSubscriptionEmail(stripeSuscription, user);
+        await sendSubscriptionEmail(stripeSuscription, newUpdatedUser, "trial");
       }
-      return stripeSuscription;
+      return { result: stripeSuscription };
     } catch (err) {
       console.log(err);
       return {
@@ -116,7 +81,7 @@ const PaymentController = () => {
     }
   };
 
-  const sendSubscriptionEmail = async (data, user) => {
+  const sendSubscriptionEmail = async (data, user, type) => {
     const transporter = await nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
@@ -135,7 +100,9 @@ const PaymentController = () => {
       text: "",
       html: `
         <b> ${
-          data.id
+          type === "trial"
+            ? "Your Trial Plan expired by " + user.planExpiryDate
+            : data.id
             ? "Your Payment for this month has been deducted"
             : "Error : " + data
         }</b>

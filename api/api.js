@@ -78,7 +78,7 @@ server.on("error", e => {
 });
 
 server.on("close", e => {
-  console.log("Stopping ...");
+  console.log("Server Stopped ...");
 });
 
 process.on("SIGINT", function() {

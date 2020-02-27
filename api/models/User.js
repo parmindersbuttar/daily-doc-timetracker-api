@@ -32,7 +32,19 @@ const User = sequelize.define(
     },
     role: {
       type: Sequelize.STRING,
-      type: DataTypes.ENUM("admin", "customer")
+      type: DataTypes.ENUM("customer", "organization")
+    },
+    addressLine1: {
+      type: Sequelize.STRING
+    },
+    postalCode: {
+      type: Sequelize.INTEGER
+    },
+    state: {
+      type: Sequelize.STRING
+    },
+    country: {
+      type: Sequelize.STRING
     },
     planExpiryDate: {
       type: Sequelize.DATE,

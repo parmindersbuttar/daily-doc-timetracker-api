@@ -40,4 +40,11 @@ const PaymentMethods = sequelize.define(
   { hooks, tableName }
 );
 
+// eslint-disable-next-line
+PaymentMethods.prototype.toJSON = function() {
+  const values = Object.assign({}, this.get());
+  delete values.source;
+  return values;
+};
+
 module.exports = PaymentMethods;
