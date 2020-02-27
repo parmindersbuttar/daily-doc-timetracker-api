@@ -5,7 +5,6 @@ const hooks = {};
 
 const tableName = "restricted-activities";
 
-
 const RestrictedActivity = sequelize.define(
   "RestrictedActivity",
   {
@@ -15,14 +14,5 @@ const RestrictedActivity = sequelize.define(
   },
   { hooks, tableName }
 );
-
-// eslint-disable-next-line
-RestrictedActivity.prototype.toJSON = function() {
-  const values = Object.assign({}, this.get());
-
-  return values;
-};
-
-
 
 module.exports = RestrictedActivity;

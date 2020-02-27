@@ -34,16 +34,11 @@ const PaymentController = () => {
     );
 
     try {
-      stripeProductPlan = await stripe.plans.create({
-        amount: user.Plan.price * 100,
-        currency: "usd",
-        interval: "month",
-        product: { name: user.Plan.name }
-      });
+      const stripeProductPlanId = user.Plan.stripePlanId;
 
       const stripeSuscription = await stripe.subscriptions.create({
         customer: user.stripeCustomerId,
-        items: [{ plan: stripeProductPlan.id }],
+        items: [{ plan: stripeProductPlanId }],
         default_payment_method: activePaymentMethod[0].source,
         trial_period_days: 1
       });

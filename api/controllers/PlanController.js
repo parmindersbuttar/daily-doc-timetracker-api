@@ -1,21 +1,35 @@
 const Plan = require("../models/Plan");
+const connection = require("../../config/connection");
+const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
+const stripe = require("stripe")(StripeApi);
 
 const PlanController = () => {
   const createPlan = async (req, res) => {
     const { body } = req;
     try {
+      stripeProductPlan = await stripe.plans.create({
+        amount: body.price * 100,
+        currency: "usd",
+        interval: body.validity,
+        product: { name: body.name }
+      });
+
       const plan = await Plan.create({
         name: body.name,
         description: body.description,
         price: body.price,
         validity: body.validity,
         feature: body.feature,
-        currency : body.currency
+        currency: body.currency,
+        stripePlanId: stripeProductPlan.id
       });
-      return res.status(200).json({ plan });
+
+      return res.status(200).json({ success: true, plan });
     } catch (err) {
       console.log(err);
-      return res.status(500).json({ msg: "Internal server error" });
+      return res
+        .status(500)
+        .json({ success: false, msg: "Internal server error" });
     }
   };
 

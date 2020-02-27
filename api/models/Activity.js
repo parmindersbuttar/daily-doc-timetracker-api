@@ -2,7 +2,6 @@ const Sequelize = require("sequelize");
 const bcryptService = require("../services/bcrypt.service");
 const Note = require("./Note");
 const sequelize = require("../../config/database");
-const DataTypes = Sequelize.DataTypes;
 
 const hooks = {
   beforeCreate(user) {
@@ -11,8 +10,6 @@ const hooks = {
 };
 
 const tableName = "activities";
-
-const User = require("./User");
 
 const Activity = sequelize.define(
   "Activity",

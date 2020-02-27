@@ -1,11 +1,5 @@
 const Sequelize = require("sequelize");
-const bcryptService = require("../services/bcrypt.service");
-
 const sequelize = require("../../config/database");
-const DataTypes = Sequelize.DataTypes;
-
-const User = require("./User");
-const Activity = require("./Activity");
 
 const hooks = {};
 
@@ -29,14 +23,5 @@ const Note = sequelize.define(
   },
   { hooks, tableName }
 );
-
-// eslint-disable-next-line
-Note.prototype.toJSON = function() {
-  const values = Object.assign({}, this.get());
-
-  delete values.password;
-
-  return values;
-};
 
 module.exports = Note;

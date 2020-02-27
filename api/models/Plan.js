@@ -1,5 +1,4 @@
 const Sequelize = require("sequelize");
-const bcryptService = require("../services/bcrypt.service");
 const sequelize = require("../../config/database");
 
 const hooks = {};
@@ -10,25 +9,41 @@ const Plan = sequelize.define(
   "Plan",
   {
     name: {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
+      allowNull: false
     },
     description: {
       type: Sequelize.STRING
     },
     price: {
-      type: Sequelize.FLOAT
+      type: Sequelize.FLOAT,
+      allowNull: false
     },
     currency: {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
+      allowNull: false
     },
     validity: {
-      type: Sequelize.INTEGER
+      type: Sequelize.STRING,
+      allowNull: false
     },
-    feature : {
+    feature: {
+      type: Sequelize.STRING
+    },
+    stripePlanId: {
       type: Sequelize.STRING
     }
   },
   { hooks, tableName }
 );
+
+// eslint-disable-next-line
+Plan.prototype.toJSON = function() {
+  const values = Object.assign({}, this.get());
+  
+  delete values.stripePlanId;
+
+  return values;
+};
 
 module.exports = Plan;
