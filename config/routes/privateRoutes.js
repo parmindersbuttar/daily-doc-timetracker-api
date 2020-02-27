@@ -6,7 +6,7 @@ const privateRoutes = {
   "POST /note": "NoteController.createNote",
   "POST /plan": "PlanController.createPlan",
   "POST /customer": "PaymentController.createCustomer",
-  "POST /cancel-subscription": "PaymentController.cancelSubscription"
+  "POST /toggle-subscription": "PaymentController.toggleSubscription"
 };
 
 module.exports = privateRoutes;

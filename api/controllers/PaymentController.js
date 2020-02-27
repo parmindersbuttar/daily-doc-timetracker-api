@@ -110,24 +110,53 @@ const PaymentController = () => {
     });
   };
 
-  const cancelSubscription = async (req, res) => {
-    const subId = req.body.subscriptionId;
+  const toggleSubscription = async (req, res) => {
+    const value = req.body.value;
     const userId = req.token.id;
+    const user = await User.findByPk(userId);
+    const subscriptionId = user.subscriptionId;
     try {
-      const result = await stripe.subscriptions.del(subId);
-      if (result.hasOwnProperty("id")) {
-        const updatedUser = await User.update(
-          { subscriptionActive: false },
-          { where: { id: userId } }
+      // Cancel Subscription
+      if (value === false) {
+        const result = await stripe.subscriptions.del(subscriptionId);
+        if (result.hasOwnProperty("id")) {
+          await User.update(
+            { subscriptionActive: false },
+            { where: { id: userId } }
+          );
+
+          return res.status(200).json({
+            success: true,
+            message: "Subscription Canceled Successfully"
+          });
+        }
+      } else {
+        // Re-subscribe Subscription
+        const subscription = await stripe.subscriptions.retrieve(
+          user.subscriptionId
+        );
+
+        const updatedSubscription = await stripe.subscriptions.update(
+          user.subscriptionId,
+          {
+            cancel_at_period_end: false,
+            items: [
+              {
+                id: subscription.items.data[0].id,
+                plan: subscription.plan.id
+              }
+            ]
+          }
         );
 
         return res.status(200).json({
           success: true,
-          message: "Subscription Canceled Successfully",
-          updatedUser
+          message: "Subscription Re-Subscribed Successfully",
+          updatedSubscription
         });
       }
     } catch (error) {
+      console.log(error);
       return res
         .status(500)
         .json({ success: false, err: error.raw ? error.raw.message : error });
@@ -137,7 +166,7 @@ const PaymentController = () => {
   return {
     createCustomer,
     createCharge,
-    cancelSubscription
+    toggleSubscription
   };
 };
 
