@@ -4,6 +4,7 @@ const publicRoutes = {
   "POST /login": "UserController.login",
   "POST /validate": "UserController.validate",
   "GET /plans": "PlanController.getAll",
+  "POST /plan": "PlanController.createPlan",
   "POST /recover-password": "UserController.recoverPassword",
   "POST /reset-password": "UserController.resetPassword"
 };

@@ -21,14 +21,8 @@ const UserController = () => {
     const { body } = req;
     const { card } = body;
     let token;
-    let trialPlanDays = 1;
-    let expiryDate = null;
 
     if (body.password === body.confirmPassword) {
-      expiryDate = moment(new Date())
-        .add(trialPlanDays, "days")
-        .toDate();
-
       try {
         if (!body.email || body.email === "")
           return res.status(500).json({ error: "Invalid Email" });
@@ -82,16 +76,16 @@ const UserController = () => {
           });
 
           // Create Subscription with one Day trial Period
-          const stripeSubResult = await PaymentController().createCharge(
+          const stripeSubscriptionResult = await PaymentController().createSubscriptionCharge(
             userData[0]
           );
-          if (stripeSubResult.result) {
+          if (stripeSubscriptionResult.result) {
             return res.status(200).json({
               success: true,
               token,
               user: userData.length ? userData[0] : null
             });
-          } else if (stripeSubResult.error) {
+          } else if (stripeSubscriptionResult.error) {
             return res.status(500).json({
               success: false,
               error:
@@ -100,9 +94,9 @@ const UserController = () => {
 
             // return res.status(500).json({
             //   success: false,
-            //   error: stripeSubResult.error
-            //     ? stripeSubResult.error.raw.message
-            //     : stripeSubResult.error
+            //   error: stripeSubscriptionResult.error
+            //     ? stripeSubscriptionResult.error.raw.message
+            //     : stripeSubscriptionResult.error
             // });
           }
         } else {

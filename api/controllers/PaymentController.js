@@ -4,6 +4,8 @@ const connection = require("../../config/connection");
 const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
 const stripe = require("stripe")(StripeApi);
 const User = require("../models/User");
+const Plan = require("../models/Plan");
+const PaymentMethods = require("../models/PaymentMethods");
 const EMAIL = connection[process.env.NODE_ENV].emailId;
 const EMAILPASSWORD = connection[process.env.NODE_ENV].emailPassword;
 
@@ -28,7 +30,7 @@ const PaymentController = () => {
     }
   };
 
-  const createCharge = async user => {
+  const createSubscriptionCharge = async user => {
     const activePaymentMethod = user.PaymentMethods.filter(
       item => item.active === true
     );
@@ -36,14 +38,15 @@ const PaymentController = () => {
     try {
       const stripeProductPlanId = user.Plan.stripePlanId;
 
-      const stripeSuscription = await stripe.subscriptions.create({
+      const stripeSubscription = await stripe.subscriptions.create({
         customer: user.stripeCustomerId,
         items: [{ plan: stripeProductPlanId }],
         default_payment_method: activePaymentMethod[0].source,
         trial_period_days: 1
       });
 
-      const expireTrialEpoch = stripeSuscription.current_period_end;
+      console.log(stripeSubscription.status);
+      const expireTrialEpoch = stripeSubscription.current_period_end;
 
       const expiryTrialDate = moment
         .unix(expireTrialEpoch)
@@ -51,8 +54,9 @@ const PaymentController = () => {
 
       const updatedUser = await User.update(
         {
-          subscriptionId: stripeSuscription.id,
-          planExpiryDate: expiryTrialDate
+          subscriptionId: stripeSubscription.id,
+          planExpiryDate: expiryTrialDate,
+          premium: true
         },
         {
           where: {
@@ -64,9 +68,13 @@ const PaymentController = () => {
       const newUpdatedUser = await User.findByPk(user.id);
 
       if (updatedUser[0] > 0) {
-        await sendSubscriptionEmail(stripeSuscription, newUpdatedUser, "trial");
+        await sendSubscriptionEmail(
+          stripeSubscription,
+          newUpdatedUser,
+          "trial"
+        );
       }
-      return { result: stripeSuscription };
+      return { result: stripeSubscription };
     } catch (err) {
       console.log(err);
       return {
@@ -108,7 +116,10 @@ const PaymentController = () => {
   const toggleSubscription = async (req, res) => {
     const value = req.body.value;
     const userId = req.token.id;
-    const user = await User.findByPk(userId);
+    const user = await User.findOne({
+      where: { id: userId },
+      include: [Plan, PaymentMethods]
+    });
     const subscriptionId = user.subscriptionId;
     try {
       // Cancel Subscription
@@ -116,39 +127,32 @@ const PaymentController = () => {
         const result = await stripe.subscriptions.del(subscriptionId);
         if (result.hasOwnProperty("id")) {
           await User.update(
-            { subscriptionActive: false },
+            { subscriptionActive: false, premium: false, subscriptionId: null },
             { where: { id: userId } }
           );
 
           return res.status(200).json({
             success: true,
-            message: "Subscription Canceled Successfully"
+            msg: "Subscription Canceled Successfully"
           });
         }
       } else {
         // Re-subscribe Subscription
-        const subscription = await stripe.subscriptions.retrieve(
-          user.subscriptionId
+        const stripeNewSubscriptionResult = await createSubscriptionCharge(
+          user
         );
 
-        const updatedSubscription = await stripe.subscriptions.update(
-          user.subscriptionId,
-          {
-            cancel_at_period_end: false,
-            items: [
-              {
-                id: subscription.items.data[0].id,
-                plan: subscription.plan.id
-              }
-            ]
-          }
-        );
-
-        return res.status(200).json({
-          success: true,
-          message: "Subscription Re-Subscribed Successfully",
-          updatedSubscription
-        });
+        if (stripeNewSubscriptionResult.result) {
+          return res.status(200).json({
+            success: true,
+            msg: "Subscription Activated Successfully"
+          });
+        } else if (stripeNewSubscriptionResult.error) {
+          return res.status(500).json({
+            success: false,
+            err: error.raw ? error.raw.message : error
+          });
+        }
       }
     } catch (error) {
       console.log(error);
@@ -160,7 +164,7 @@ const PaymentController = () => {
 
   return {
     createCustomer,
-    createCharge,
+    createSubscriptionCharge,
     toggleSubscription
   };
 };

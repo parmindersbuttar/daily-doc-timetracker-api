@@ -4,7 +4,6 @@ const privateRoutes = {
   "GET /users/activities": "UserController.getUserActivities",
   "POST /activity": "ActivityController.createActivity",
   "POST /note": "NoteController.createNote",
-  "POST /plan": "PlanController.createPlan",
   "POST /customer": "PaymentController.createCustomer",
   "POST /toggle-subscription": "PaymentController.toggleSubscription"
 };
