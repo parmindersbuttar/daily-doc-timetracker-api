@@ -1,7 +1,7 @@
 const development = {
-  database: "timeTracker",
-  username: "timetracker",
-  password: "Tim$Tr@Ck$r@123",
+  database: "devtracker",
+  username: "devtracker",
+  password: "DvTr@cK@$",
   host: "localhost",
   dialect: "mysql",
   stripeApiKey: process.env.STRIPESECRETKEY,
