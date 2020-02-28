@@ -10,7 +10,7 @@ const development = {
 };
 
 const testing = {
-  database: "testDatabase",
+  database: "databasename",
   username: "username",
   password: "password",
   host: "localhost",
