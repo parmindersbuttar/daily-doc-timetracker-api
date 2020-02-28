@@ -31,6 +31,7 @@ const PaymentController = () => {
   };
 
   const createSubscriptionCharge = async user => {
+    console.log("userCreateSub", user);
     const activePaymentMethod = user.PaymentMethods.filter(
       item => item.active === true
     );
@@ -44,6 +45,8 @@ const PaymentController = () => {
         default_payment_method: activePaymentMethod[0].source,
         trial_period_days: 1
       });
+
+      console.log("stripeSubscription", stripeSubscription);
 
       const expireTrialEpoch = stripeSubscription.current_period_end;
 
@@ -73,11 +76,12 @@ const PaymentController = () => {
           "trial"
         );
       }
+
       return { result: stripeSubscription };
     } catch (err) {
       console.log(err);
       return {
-        error: !err.raw && err.raw.message ? err.raw.message : err,
+        error: err,
         user: user
       };
     }

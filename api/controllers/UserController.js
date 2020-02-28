@@ -95,6 +95,8 @@ const UserController = () => {
             isUserExist[0]
           );
 
+          console.log("stripeSubscriptionResult", stripeSubscriptionResult);
+
           if (stripeSubscriptionResult.result) {
             return res.status(200).json({
               success: true,
