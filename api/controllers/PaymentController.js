@@ -69,13 +69,13 @@ const PaymentController = () => {
 
       const newUpdatedUser = await User.findByPk(user.id);
 
-      if (updatedUser[0] > 0) {
-        await sendSubscriptionEmail(
-          stripeSubscription,
-          newUpdatedUser,
-          "trial"
-        );
-      }
+      // if (updatedUser[0] > 0) {
+      //   await sendSubscriptionEmail(
+      //     stripeSubscription,
+      //     newUpdatedUser,
+      //     "trial"
+      //   );
+      // }
 
       return { result: stripeSubscription };
     } catch (err) {
