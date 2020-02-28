@@ -41,7 +41,7 @@ const PaymentController = () => {
       const stripeSubscription = await stripe.subscriptions.create({
         customer: user.stripeCustomerId,
         items: [{ plan: stripeProductPlanId }],
-        default_payment_method: activePaymentMethod[0].source,
+        default_payment_method: activePaymentMethod[0].source
         trial_period_days: 1
       });
 
@@ -162,10 +162,39 @@ const PaymentController = () => {
     }
   };
 
+  const stripePaymentEvents = async (req, res) => {
+    let event = req.body;
+    try {
+      console.log(event.type, event.data.object);
+      switch (event.type) {
+        case "payment_intent.succeeded":
+          const paymentIntent = event.data.object;
+          // Then define and call a method to handle the successful payment intent.
+          // handlePaymentIntentSucceeded(paymentIntent);
+          break;
+        case "payment_method.attached":
+          const paymentMethod = event.data.object;
+          // Then define and call a method to handle the successful attachment of a PaymentMethod.
+          // handlePaymentMethodAttached(paymentMethod);
+          break;
+        // ... handle other event types
+        default:
+          // Unexpected event type
+          return res.status(400).end({ success: false });
+      }
+
+      // Return a response to acknowledge receipt of the event
+      return res.json({ received: true });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return {
     createCustomer,
     createSubscriptionCharge,
-    toggleSubscription
+    toggleSubscription,
+    stripePaymentEvents
   };
 };
 

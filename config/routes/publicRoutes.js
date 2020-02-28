@@ -6,7 +6,8 @@ const publicRoutes = {
   "GET /plans": "PlanController.getAll",
   "POST /plan": "PlanController.createPlan",
   "POST /recover-password": "UserController.recoverPassword",
-  "POST /reset-password": "UserController.resetPassword"
+  "POST /reset-password": "UserController.resetPassword",
+  "POST /webhook-charge": "PaymentController.stripePaymentEvents",
 };
 
 module.exports = publicRoutes;
