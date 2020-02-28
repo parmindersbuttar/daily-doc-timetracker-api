@@ -14,7 +14,7 @@ const testing = {
   username: "username",
   password: "password",
   host: "localhost",
-  dialect: "sqlite" || "mysql" || "postgres",
+  dialect: "mysql" || "sqlite" || "postgres",
   stripeApiKey: process.env.STRIPESECRETKEY,
   emailId: process.env.EMAILID,
   emailPassword: process.env.EMAILPASSWORD

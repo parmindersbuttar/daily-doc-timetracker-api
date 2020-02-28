@@ -32,7 +32,8 @@ const User = sequelize.define(
     },
     role: {
       type: Sequelize.STRING,
-      type: DataTypes.ENUM("customer", "organization")
+      type: DataTypes.ENUM("customer", "organization"),
+      defaultValue: "customer"
     },
     addressLine1: {
       type: Sequelize.STRING
@@ -95,5 +96,7 @@ User.belongsTo(Plan, {
     name: "planId"
   }
 });
+
+// User.hasMany(User, {as: 'OrganizationUser'}) 
 
 module.exports = User;
