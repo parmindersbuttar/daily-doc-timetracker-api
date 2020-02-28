@@ -97,6 +97,6 @@ User.belongsTo(Plan, {
   }
 });
 
-User.hasMany(User, {as: 'OrganizationUser'}) 
+User.hasMany(User, { as: "OrganizationUser" });
 
 module.exports = User;
