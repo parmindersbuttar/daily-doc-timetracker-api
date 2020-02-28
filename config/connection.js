@@ -25,7 +25,7 @@ const production = {
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   host: process.env.DB_HOST || "localhost",
-  dialect: "sqlite" || "mysql" || "postgres",
+  dialect: "mysql" || "sqlite" || "postgres",
   stripeApiKey: process.env.STRIPESECRETKEY,
   emailId: process.env.EMAILID,
   emailPassword: process.env.EMAILPASSWORD

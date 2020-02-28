@@ -170,13 +170,9 @@ const PaymentController = () => {
         case "payment_intent.succeeded":
           const paymentIntent = event.data.object;
           // Then define and call a method to handle the successful payment intent.
-          // handlePaymentIntentSucceeded(paymentIntent);
+          handlePaymentIntentSucceeded(paymentIntent);
           break;
-        case "payment_method.attached":
-          const paymentMethod = event.data.object;
-          // Then define and call a method to handle the successful attachment of a PaymentMethod.
-          // handlePaymentMethodAttached(paymentMethod);
-          break;
+
         // ... handle other event types
         default:
           // Unexpected event type
@@ -189,6 +185,8 @@ const PaymentController = () => {
       console.log(err);
     }
   };
+
+  const handlePaymentIntentSucceeded = async () => {};
 
   return {
     createCustomer,

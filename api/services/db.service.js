@@ -8,10 +8,12 @@ const dbService = (environment, migrate) => {
 
   const syncDB = () => database.sync();
 
-  const successfulDBStart = () =>
+  const successfulDBStart = async () => {
     console.info(
       "connection to the database has been established successfully"
     );
+    await addRestrictedActivitySeeds();
+  };
 
   const errorDBStart = err =>
     console.info("unable to connect to the database:", err);
@@ -27,7 +29,6 @@ const dbService = (environment, migrate) => {
     try {
       await syncDB();
       successfulDBStart();
-      await addRestrictedActivitySeeds();
     } catch (err) {
       errorDBStart(err);
     }
