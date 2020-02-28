@@ -18,10 +18,10 @@ const PaymentController = () => {
         source: card.id,
         name: body.name,
         address: {
-          line1: body.addressLine1 || "510 Townsend St",
-          postal_code: body.postalCode || "98140",
-          state: body.state || "CA",
-          country: body.country || "US"
+          line1: body.addressLine1,
+          postal_code: body.postalCode,
+          state: body.state,
+          country: body.country
         }
       });
       return customer;
@@ -45,7 +45,6 @@ const PaymentController = () => {
         trial_period_days: 1
       });
 
-      console.log(stripeSubscription.status);
       const expireTrialEpoch = stripeSubscription.current_period_end;
 
       const expiryTrialDate = moment
