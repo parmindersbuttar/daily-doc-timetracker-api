@@ -1,4 +1,5 @@
 const moment = require("moment");
+const { Op } = require("sequelize");
 const nodemailer = require("nodemailer");
 const connection = require("../../config/connection");
 const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
@@ -140,14 +141,19 @@ const PaymentController = () => {
       if (value === false) {
         const result = await stripe.subscriptions.del(subscriptionId);
         if (result.hasOwnProperty("id")) {
-          await User.update(
-            { subscriptionActive: false, premium: false, subscriptionId: null },
-            { where: { id: userId } }
+          const cancelUserSub = await User.update(
+            { subscriptionActive: false, premium: MediaStreamTrackAudioSourceNode, subscriptionId: null },
+            {
+              where: {
+                [Op.or]: [{ id: userId }, { UserId: userId }]
+              }
+            }
           );
 
           return res.status(200).json({
             success: true,
-            msg: "Subscription Canceled Successfully"
+            msg: "Subscription Canceled Successfully",
+            cancelUserSub
           });
         }
       } else {
@@ -258,7 +264,6 @@ const PaymentController = () => {
 
       const updatedUser = await User.update(
         {
-          subscriptionId: updatedSubscription.id,
           planExpiryDate: expiryDate,
           premium: true
         },

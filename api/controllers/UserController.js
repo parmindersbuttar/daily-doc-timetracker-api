@@ -19,6 +19,9 @@ const EMAILPASSWORD = connection[process.env.NODE_ENV].emailPassword;
 const UserController = () => {
   const register = async (req, res) => {
     const { body } = req;
+    const authToken = req.token;
+    let organizationAdminId = authToken ? authToken.id : authToken;
+    organizationAdminId = 1
     const { card } = body;
     let token;
     let user;
@@ -42,10 +45,9 @@ const UserController = () => {
 
         const planDetails = await Plan.findByPk(body.planId);
         const userRole = planDetails.role;
-        // TODO: Add UerId for Test
 
         // If not creating by Organization
-        if (body.UserId === undefined || body.UserId === null) {
+        if (organizationAdminId === undefined) {
           if (!isUserExist.length) {
             // Create Stripe Customer
             const resultCustomer = await PaymentController().createCustomer(
@@ -133,27 +135,27 @@ const UserController = () => {
           try {
             const organizationUser = await User.findAll({
               where: {
-                id: body.UserId
+                id: organizationAdminId
               },
               include: [Plan, PaymentMethods]
             });
 
-            const stripeCusId = organizationUser[0].stripeCustomerId;
+            // const stripeCusId = organizationUser[0].stripeCustomerId;
 
             // Add user to DB
             user = await User.create({
               name: body.name,
               email: body.email,
               password: body.password,
-              planId: body.planId,
+              planId: organizationUser[0].Plan.id,
               premium: false,
-              stripeCustomerId: stripeCusId,
               addressLine1: body.addressLine1,
               postalCode: body.postalCode,
               state: body.state,
               country: body.country,
-              role: userRole,
-              UserId: body.UserId
+              role: "customer",
+              UserId: organizationAdminId
+              // stripeCustomerId: stripeCusId
             });
 
             token = authService().issue({ id: user.id });
