@@ -1,6 +1,7 @@
 const moment = require("moment");
 const { Op } = require("sequelize");
 const nodemailer = require("nodemailer");
+const axios = require("axios");
 const url = require("url");
 const uuid = require("uuid");
 const jwt = require("jsonwebtoken");
@@ -21,7 +22,6 @@ const UserController = () => {
     const { body } = req;
     const authToken = req.token;
     let organizationAdminId = authToken ? authToken.id : authToken;
-    organizationAdminId = 1
     const { card } = body;
     let token;
     let user;
@@ -167,10 +167,25 @@ const UserController = () => {
             );
 
             if (updateSubscriptionResult.result) {
+              const url = getURL(req);
+              let emailMessage = "";
+              await axios
+                .post(url + "/public/recover-password", {
+                  email: user.email
+                })
+                .then(function(response) {
+                  console.log(response);
+                  if (response.data) emailMessage = response.data.msg;
+                })
+                .catch(function(error) {
+                  console.log(error);
+                });
+
               return res.status(200).json({
                 success: true,
                 token,
-                data: updateSubscriptionResult
+                data: updateSubscriptionResult,
+                emailMessage
               });
             } else if (updateSubscriptionResult.error) {
               return res.status(500).json({
