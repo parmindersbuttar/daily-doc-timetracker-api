@@ -32,6 +32,10 @@ const Plan = sequelize.define(
     },
     stripePlanId: {
       type: Sequelize.STRING
+    },
+    role: {
+      type: Sequelize.ENUM("customer", "organization"),
+      allowNull: false
     }
   },
   { hooks, tableName }
@@ -40,7 +44,7 @@ const Plan = sequelize.define(
 // eslint-disable-next-line
 Plan.prototype.toJSON = function() {
   const values = Object.assign({}, this.get());
-  
+
   delete values.stripePlanId;
 
   return values;

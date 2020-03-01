@@ -40,7 +40,7 @@ const PaymentController = () => {
   };
 
   const createSubscriptionCharge = async user => {
-    console.log("userCreateSub", user);
+    // console.log("userCreateSub", user);
     const activePaymentMethod = user.PaymentMethods.filter(
       item => item.active === true
     );
@@ -176,6 +176,13 @@ const PaymentController = () => {
     }
   };
 
+  const setwebhookEndpoints = async () => {
+    await stripe.webhookEndpoints.create({
+      url: "/public/webhook-charge",
+      enabled_events: ["charge.failed", "charge.succeeded"]
+    });
+  };
+
   const stripePaymentWebhookEvents = async (req, res) => {
     let event = req.body;
     try {
@@ -200,22 +207,26 @@ const PaymentController = () => {
     }
   };
 
-  const daysInMonth = (month, year) => {
-    return new Date(year, month, 0).getDate();
-  };
+  const handlePaymentIntentSucceeded = async succeededRes => {
+    console.log("Webhook succeededRes.customer", succeededRes.customer);
+    const customerDetails = await stripe.customers.retrieve(
+      succeededRes.customer
+    );
 
-  const handlePaymentIntentSucceeded = async details => {
-    const email = details.billing_details.email;
-    const currentMonth = moment().format("MM");
-    const currentYear = moment().format("YYYY");
+    const email = customerDetails.email;
 
-    const planExpiryDate = moment()
-      .add(daysInMonth(currentMonth, currentYear), "days")
-      .format("YYYY-MM-DD HH:mm:ss");
+    //New data of subscription
+    const newSubData =
+      customerDetails.subscriptions.data[
+        customerDetails.subscriptions.total_count - 1
+      ];
+
+    const expiryEpoch = newSubData.current_period_end;
+    const expiryDate = moment.unix(expiryEpoch).format("YYYY-MM-DD HH:mm:ss");
 
     if (email && email !== null) {
       const updatedUser = await User.update(
-        { planExpiryDate: planExpiryDate },
+        { planExpiryDate: expiryDate },
         { where: { email } }
       );
 
@@ -223,9 +234,66 @@ const PaymentController = () => {
     }
   };
 
+  const updateOrganizationSubscription = async (newUser, orgUser) => {
+    // console.log("orgUser", orgUser);
+    try {
+      const subscriptionId = orgUser.subscriptionId;
+      const subscriptionDetails = await stripe.subscriptions.retrieve(
+        subscriptionId
+      );
+
+      console.log("subscriptionDetails", subscriptionDetails);
+      const updatedSubscription = await stripe.subscriptions.update(
+        subscriptionId,
+        {
+          quantity: subscriptionDetails.quantity + 1
+        }
+      );
+
+      console.log("updatedSubscription", updatedSubscription);
+
+      const expiryEpoch = updatedSubscription.current_period_end;
+
+      const expiryDate = moment.unix(expiryEpoch).format("YYYY-MM-DD HH:mm:ss");
+
+      const updatedUser = await User.update(
+        {
+          subscriptionId: updatedSubscription.id,
+          planExpiryDate: expiryDate,
+          premium: true
+        },
+        {
+          where: {
+            id: newUser.id
+          }
+        }
+      );
+
+      // const newUpdatedUser = await User.findByPk(newUser.id);
+
+      // if (updatedUser[0] > 0) {
+      //   await sendSubscriptionEmail(
+      //     stripeSubscription,
+      //     newUpdatedUser,
+      //     "paid"
+      //   );
+      // }
+
+      return { result: updatedSubscription };
+    } catch (err) {
+      console.log(err);
+      return {
+        error: err,
+        user: newUser,
+        orgUser: orgUser
+      };
+    }
+  };
+
   return {
     createCustomer,
     createSubscriptionCharge,
+    updateOrganizationSubscription,
     toggleSubscription,
     stripePaymentWebhookEvents
   };

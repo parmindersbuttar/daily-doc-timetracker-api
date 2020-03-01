@@ -29,7 +29,6 @@ const UserController = () => {
         if (!body.email || body.email === "")
           return res.status(500).json({ error: "Invalid Email" });
 
-        // is user exist
         isUserExist = await User.findAll({
           where: {
             email: body.email
@@ -41,11 +40,106 @@ const UserController = () => {
           return res.status(400).json({ error: "Email must be unique" });
         }
 
-        if (!isUserExist.length) {
-          // Create Stripe Customer
-          const resultCustomer = await PaymentController().createCustomer(body);
+        const planDetails = await Plan.findByPk(body.planId);
+        const userRole = planDetails.role;
+        // TODO: Add UerId for Test
 
-          if (resultCustomer.hasOwnProperty("id")) {
+        // If not creating by Organization
+        if (body.UserId === undefined || body.UserId === null) {
+          if (!isUserExist.length) {
+            // Create Stripe Customer
+            const resultCustomer = await PaymentController().createCustomer(
+              body
+            );
+            if (resultCustomer.hasOwnProperty("id")) {
+              // Add user to DB
+              user = await User.create({
+                name: body.name,
+                email: body.email,
+                password: body.password,
+                planId: body.planId,
+                premium: false,
+                stripeCustomerId: resultCustomer.id,
+                addressLine1: body.addressLine1,
+                postalCode: body.postalCode,
+                state: body.state,
+                country: body.country,
+                role: userRole
+              });
+
+              token = authService().issue({ id: user.id });
+
+              // Add payment Method to DB
+              await PaymentMethods.create({
+                name: card.name,
+                type: card.type,
+                active: 1,
+                last4: card.last4,
+                exp_month: card.exp_month,
+                exp_year: card.exp_year,
+                brand: card.brand,
+                UserId: user.id,
+                source: body.card.id
+              });
+            } else {
+              return res.status(500).json({
+                success: false,
+                error:
+                  "There is some error while saving your card details. Please try after sometime or connect to customer support",
+                err: resultCustomer
+              });
+            }
+          }
+
+          try {
+            isUserExist = await User.findAll({
+              where: {
+                email: body.email
+              },
+              include: [Plan, PaymentMethods]
+            });
+
+            // Create Subscription with one Day trial Period
+            const stripeSubscriptionResult = await PaymentController().createSubscriptionCharge(
+              isUserExist[0]
+            );
+
+            console.log("stripeSubscriptionResult", stripeSubscriptionResult);
+
+            if (stripeSubscriptionResult.result) {
+              return res.status(200).json({
+                success: true,
+                token,
+                user: isUserExist[0]
+              });
+            } else if (stripeSubscriptionResult.error) {
+              return res.status(500).json({
+                success: false,
+                error:
+                  "There is some error while saving your card details. Please try after sometime or connect to customer support",
+                err: stripeSubscriptionResult
+              });
+            }
+          } catch (err) {
+            return res.status(500).json({
+              success: false,
+              error:
+                "There is some error while saving your card details. Please try after sometime or connect to customer support",
+              err: err
+            });
+          }
+        } else {
+          // Create User in Organization with OrganizationID(as UserId)
+          try {
+            const organizationUser = await User.findAll({
+              where: {
+                id: body.UserId
+              },
+              include: [Plan, PaymentMethods]
+            });
+
+            const stripeCusId = organizationUser[0].stripeCustomerId;
+
             // Add user to DB
             user = await User.create({
               name: body.name,
@@ -53,71 +147,44 @@ const UserController = () => {
               password: body.password,
               planId: body.planId,
               premium: false,
-              stripeCustomerId: resultCustomer.id,
+              stripeCustomerId: stripeCusId,
               addressLine1: body.addressLine1,
               postalCode: body.postalCode,
               state: body.state,
-              country: body.country
+              country: body.country,
+              role: userRole,
+              UserId: body.UserId
             });
 
             token = authService().issue({ id: user.id });
 
-            // Add payment Method to DB
-            await PaymentMethods.create({
-              name: card.name,
-              type: card.type,
-              active: 1,
-              last4: card.last4,
-              exp_month: card.exp_month,
-              exp_year: card.exp_year,
-              brand: card.brand,
-              UserId: user.id,
-              source: body.card.id
-            });
-          } else {
-            return res.status(500).json({
+            // Update Existing Organization Subscription
+            const updateSubscriptionResult = await PaymentController().updateOrganizationSubscription(
+              user,
+              organizationUser[0]
+            );
+
+            if (updateSubscriptionResult.result) {
+              return res.status(200).json({
+                success: true,
+                token,
+                data: updateSubscriptionResult
+              });
+            } else if (updateSubscriptionResult.error) {
+              return res.status(500).json({
+                success: false,
+                error:
+                  "There is some error while saving your card details. Please try after sometime or connect to customer support",
+                err: stripeSubscriptionResult
+              });
+            }
+          } catch (err) {
+            return res.status(400).json({
               success: false,
-              error:
-                "There is some error while saving your card details. Please try after sometime or connect to customer support",
-              err: resultCustomer
+              error: "Internal Server Error",
+              err: err
             });
           }
-        }
-        try {
-          isUserExist = await User.findAll({
-            where: {
-              email: body.email
-            },
-            include: [Plan, PaymentMethods]
-          });
-          // Create Subscription with one Day trial Period
-          const stripeSubscriptionResult = await PaymentController().createSubscriptionCharge(
-            isUserExist[0]
-          );
-
-          console.log("stripeSubscriptionResult", stripeSubscriptionResult);
-
-          if (stripeSubscriptionResult.result) {
-            return res.status(200).json({
-              success: true,
-              token,
-              user: isUserExist[0]
-            });
-          } else if (stripeSubscriptionResult.error) {
-            return res.status(500).json({
-              success: false,
-              error:
-                "tThere is some error while saving your card details. Please try after sometime or connect to customer support",
-              err: stripeSubscriptionResult
-            });
-          }
-        } catch (err) {
-          return res.status(500).json({
-            success: false,
-            error:
-              "There is some error while saving your card details. Please try after sometime or connect to customer support",
-            err: err
-          });
         }
       } catch (err) {
         return res

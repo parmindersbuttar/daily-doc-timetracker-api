@@ -21,7 +21,8 @@ const PlanController = () => {
         validity: body.validity,
         feature: body.feature,
         currency: body.currency,
-        stripePlanId: stripeProductPlan.id
+        stripePlanId: stripeProductPlan.id,
+        role: body.role
       });
 
       return res.status(200).json({ success: true, plan });
