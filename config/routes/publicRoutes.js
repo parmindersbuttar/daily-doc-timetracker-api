@@ -7,7 +7,7 @@ const publicRoutes = {
   "POST /plan": "PlanController.createPlan",
   "POST /recover-password": "UserController.recoverPassword",
   "POST /reset-password": "UserController.resetPassword",
-  "POST /webhook-charge": "PaymentController.stripePaymentEvents",
+  "POST /webhook-charge": "PaymentController.stripePaymentWebhookEvents",
 };
 
 module.exports = publicRoutes;

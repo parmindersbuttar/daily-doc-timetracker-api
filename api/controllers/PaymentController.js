@@ -22,6 +22,15 @@ const PaymentController = () => {
           postal_code: body.postalCode,
           state: body.state,
           country: body.country
+        },
+        shipping: {
+          name: body.name,
+          address: {
+            line1: body.addressLine1,
+            state: body.state,
+            country: body.country,
+            postal_code: body.postalCode
+          }
         }
       });
       return customer;
@@ -107,7 +116,9 @@ const PaymentController = () => {
       html: `
         <b> ${
           type === "trial"
-            ? "Your Trial Plan expired by " + user.planExpiryDate
+            ? "Your Trial Plan expired by " +
+              user.planExpiryDate +
+              " and Amount will be deducted for Paid Subscription"
             : data.id
             ? "Your Payment for this month has been deducted"
             : "Error : " + data
@@ -165,12 +176,12 @@ const PaymentController = () => {
     }
   };
 
-  const stripePaymentEvents = async (req, res) => {
+  const stripePaymentWebhookEvents = async (req, res) => {
     let event = req.body;
     try {
       console.log(event.type, event.data.object);
       switch (event.type) {
-        case "payment_intent.succeeded":
+        case "charge.succeeded":
           const paymentIntent = event.data.object;
           // Then define and call a method to handle the successful payment intent.
           handlePaymentIntentSucceeded(paymentIntent);
@@ -185,17 +196,38 @@ const PaymentController = () => {
       // Return a response to acknowledge receipt of the event
       return res.json({ received: true });
     } catch (err) {
-      console.log(err);
+      console.log("err");
     }
   };
 
-  const handlePaymentIntentSucceeded = async () => {};
+  const daysInMonth = (month, year) => {
+    return new Date(year, month, 0).getDate();
+  };
+
+  const handlePaymentIntentSucceeded = async details => {
+    const email = details.billing_details.email;
+    const currentMonth = moment().format("MM");
+    const currentYear = moment().format("YYYY");
+
+    const planExpiryDate = moment()
+      .add(daysInMonth(currentMonth, currentYear), "days")
+      .format("YYYY-MM-DD HH:mm:ss");
+
+    if (email && email !== null) {
+      const updatedUser = await User.update(
+        { planExpiryDate: planExpiryDate },
+        { where: { email } }
+      );
+
+      console.log("Paid Subscription expiryDate updated", updatedUser);
+    }
+  };
 
   return {
     createCustomer,
     createSubscriptionCharge,
     toggleSubscription,
-    stripePaymentEvents
+    stripePaymentWebhookEvents
   };
 };
 
