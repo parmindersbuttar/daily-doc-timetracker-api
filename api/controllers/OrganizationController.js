@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const emailService = require("../services/mail.service");
+const url = require("url");
 
 const OrganizationController = () => {
     const get = async (req, res) => {
@@ -75,6 +77,11 @@ const OrganizationController = () => {
                 country: body.country,
                 UserId: token.id
             });
+            const webUrl = url.format({
+                protocol: req.protocol,
+                host: req.get("host")
+              });
+            emailService().sendEmail(webUrl, user);
             return res.status(200).json({ success: true });
         } catch (err) {
             console.log(err);
