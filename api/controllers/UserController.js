@@ -17,8 +17,6 @@ const PaymentController = require("../controllers/PaymentController");
 const UserController = () => {
   const register = async (req, res) => {
     const { body } = req;
-    const authToken = req.token;
-    let organizationAdminId = authToken ? authToken.id : authToken;
     const { card } = body;
     let token;
     let user;
@@ -43,8 +41,6 @@ const UserController = () => {
         const planDetails = await Plan.findByPk(body.planId);
         const userRole = planDetails.role;
 
-        // If not creating by Organization
-        if (organizationAdminId === undefined) {
           if (!isUserExist.length) {
             // Create Stripe Customer
             const resultCustomer = await PaymentController().createCustomer(
@@ -127,79 +123,7 @@ const UserController = () => {
               err: err
             });
           }
-        } else {
-          // Create User in Organization with OrganizationID(as UserId)
-          try {
-            const organizationUser = await User.findAll({
-              where: {
-                id: organizationAdminId
-              },
-              include: [Plan, PaymentMethods]
-            });
-
-            // const stripeCusId = organizationUser[0].stripeCustomerId;
-
-            // Add user to DB
-            user = await User.create({
-              name: body.name,
-              email: body.email,
-              password: body.password,
-              planId: organizationUser[0].Plan.id,
-              premium: false,
-              addressLine1: body.addressLine1,
-              postalCode: body.postalCode,
-              state: body.state,
-              country: body.country,
-              role: "customer",
-              UserId: organizationAdminId
-              // stripeCustomerId: stripeCusId
-            });
-
-            token = authService().issue({ id: user.id });
-
-            // Update Existing Organization Subscription
-            const updateSubscriptionResult = await PaymentController().updateOrganizationSubscription(
-              user,
-              organizationUser[0]
-            );
-
-            if (updateSubscriptionResult.result) {
-              const url = getURL(req);
-              let emailMessage = "";
-              await axios
-                .post(url + "/public/recover-password", {
-                  email: user.email
-                })
-                .then(function(response) {
-                  console.log(response);
-                  if (response.data) emailMessage = response.data.msg;
-                })
-                .catch(function(error) {
-                  console.log(error);
-                });
-
-              return res.status(200).json({
-                success: true,
-                token,
-                data: updateSubscriptionResult,
-                emailMessage
-              });
-            } else if (updateSubscriptionResult.error) {
-              return res.status(500).json({
-                success: false,
-                error:
-                  "There is some error while saving your card details. Please try after sometime or connect to customer support",
-                err: stripeSubscriptionResult
-              });
-            }
-          } catch (err) {
-            return res.status(400).json({
-              success: false,
-              error: "Internal Server Error",
-              err: err
-            });
-          }
-        }
+        
       } catch (err) {
         return res
           .status(500)
