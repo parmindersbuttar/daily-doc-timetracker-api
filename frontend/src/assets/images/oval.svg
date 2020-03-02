@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="771px" height="819px" viewBox="0 0 771 819" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 55 (78076) - https://sketchapp.com -->
+    <title>background_image</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="37.0450332%" y1="17.0971115%" x2="97.5167114%" y2="70.6778561%" id="linearGradient-1">
+            <stop stop-color="#459EE9" stop-opacity="0.605878497" offset="0%"></stop>
+            <stop stop-color="#2165D0" stop-opacity="0.15387347" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="37.0077695%" y1="32.858763%" x2="90.9544608%" y2="58.8951685%" id="linearGradient-2">
+            <stop stop-color="#459EE9" offset="0%"></stop>
+            <stop stop-color="#2165D0" stop-opacity="0.15387347" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="background_image" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="0.103655134">
+        <g id="Group-4" transform="translate(-163.000000, -288.000000)" fill-rule="nonzero">
+            <path d="M134.592446,533.272941 C178.570458,406.407018 289.972154,268.895003 416.850632,214.938582 C501.436283,178.967635 600.922372,191.66774 715.308897,253.038898 L1012.64866,747.895367 C883.401185,787.416694 774.261426,821.542907 685.229383,850.274005 C551.681319,893.370653 497.874368,975.053832 447.137226,974.712132 C334.585812,973.954129 280.047942,887.576426 213.290899,823.959284 C133.629206,748.044458 90.6144343,660.138865 134.592446,533.272941 Z" id="Rectangle-13-Copy" fill="url(#linearGradient-1)" transform="translate(564.824330, 584.856600) scale(-1, -1) rotate(121.000000) translate(-564.824330, -584.856600) "></path>
+            <path d="M360.204794,662.744074 C399.415958,579.082923 498.742646,488.401257 611.868561,452.819943 C687.285837,429.099067 878.183684,465.189295 1184.5621,561.090627 L1218.85956,618.171185 L693.732586,933.699303 L657.669735,957.701316 C545.819334,916.825692 470.053754,882.403869 430.372995,854.435847 C359.345961,804.374164 320.99363,746.405225 360.204794,662.744074 Z" id="Rectangle-13-Copy-3" fill="url(#linearGradient-2)" transform="translate(781.689390, 701.732773) scale(-1, -1) rotate(121.000000) translate(-781.689390, -701.732773) "></path>
+        </g>
+    </g>
+</svg>

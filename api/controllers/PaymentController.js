@@ -8,51 +8,29 @@ const PaymentMethods = require("../models/PaymentMethods");
 
 const PaymentController = () => {
   const createCustomer = async body => {
-    const { card } = body;
+    const { card, email, name } = body;
     try {
       const customer = await stripe.customers.create({
-        email: body.email,
+        email: email,
         source: card.id,
-        name: body.name,
-        address: {
-          line1: body.addressLine1,
-          postal_code: body.postalCode,
-          state: body.state,
-          country: body.country
-        },
-        shipping: {
-          name: body.name,
-          address: {
-            line1: body.addressLine1,
-            state: body.state,
-            country: body.country,
-            postal_code: body.postalCode
-          }
-        }
+        name: name
       });
       return customer;
     } catch (err) {
+      console.log('error in create stripe customer: ', err)
       return err;
     }
   };
 
-  const createSubscriptionCharge = async user => {
-    // console.log("userCreateSub", user);
-    const activePaymentMethod = user.PaymentMethods.filter(
-      item => item.active === true
-    );
-
+  const createSubscriptionCharge = async (user, selectedPlan, source) => {
+   
     try {
-      const stripeProductPlanId = user.Plan.stripePlanId;
-
       const stripeSubscription = await stripe.subscriptions.create({
         customer: user.stripeCustomerId,
-        items: [{ plan: stripeProductPlanId }],
-        default_payment_method: activePaymentMethod[0].source,
+        items: [{ plan: selectedPlan.stripePlanId }],
+        default_payment_method: source,
         trial_period_days: 1
       });
-
-      console.log("stripeSubscription", stripeSubscription);
 
       const expireTrialEpoch = stripeSubscription.current_period_end;
 
@@ -73,23 +51,10 @@ const PaymentController = () => {
         }
       );
 
-      const newUpdatedUser = await User.findByPk(user.id);
-
-      // if (updatedUser[0] > 0) {
-      //   await sendSubscriptionEmail(
-      //     stripeSubscription,
-      //     newUpdatedUser,
-      //     "trial"
-      //   );
-      // }
-
       return { result: stripeSubscription };
     } catch (err) {
-      console.log(err);
-      return {
-        error: err,
-        user: user
-      };
+      console.log('error in create stripe subscription: ', err)
+      return err;
     }
   };
 

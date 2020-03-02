@@ -86,7 +86,7 @@ const ActivityController = () => {
           if (!activity) {
             return res
               .status(400)
-              .json({ msg: "Bad Request: Activity creation failed" });
+              .json({ msg: "Failed to add new activity" });
           }
           return res.status(200).json({ activity });
         }

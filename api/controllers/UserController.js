@@ -18,34 +18,30 @@ const UserController = () => {
   const register = async (req, res) => {
     const { body } = req;
     const { card } = body;
-    let token;
     let user;
-    let isUserExist;
 
     if (body.password === body.confirmPassword) {
       try {
         if (!body.email || body.email === "")
-          return res.status(500).json({ error: "Invalid Email" });
+          return res.status(500).json({ error: "Invalid Email Address" });
 
-        isUserExist = await User.findAll({
+        let existingUser = await User.findOne({
           where: {
             email: body.email
-          },
-          include: [Plan, PaymentMethods]
+          }
         });
 
-        if (isUserExist.length && isUserExist[0].premium === true) {
-          return res.status(400).json({ error: "Email must be unique" });
+        if (existingUser) {
+          return res.status(400).json({ error: "User with this email address already registered" });
         }
 
-        const planDetails = await Plan.findByPk(body.planId);
-        const userRole = planDetails.role;
-
-          if (!isUserExist.length) {
+        const selectedPlan = await Plan.findByPk(body.planId);
+        if(!selectedPlan) {
+          return res.status(500).json({ error: "Something went wrong. Please connect service support." });
+        }
+         
             // Create Stripe Customer
-            const resultCustomer = await PaymentController().createCustomer(
-              body
-            );
+            const resultCustomer = await PaymentController().createCustomer(body);
             if (resultCustomer.hasOwnProperty("id")) {
               // Add user to DB
               user = await User.create({
@@ -59,10 +55,12 @@ const UserController = () => {
                 postalCode: body.postalCode,
                 state: body.state,
                 country: body.country,
-                role: userRole
+                role: selectedPlan.role
               });
 
-              token = authService().issue({ id: user.id });
+              let token = authService().issue({ id: user.id });
+
+              const stripeSubscriptionResult = await PaymentController().createSubscriptionCharge(user, selectedPlan, body.card.id);
 
               // Add payment Method to DB
               await PaymentMethods.create({
@@ -76,63 +74,29 @@ const UserController = () => {
                 UserId: user.id,
                 source: body.card.id
               });
+              return res.status(200).json({
+                success: true,
+                token,
+                user: user
+              });
             } else {
               return res.status(500).json({
                 success: false,
                 error:
-                  "There is some error while saving your card details. Please try after sometime or connect to customer support",
-                err: resultCustomer
+                  "There is some error while saving your card details. Please try after sometime or connect to customer support"
               });
             }
-          }
-
-          try {
-            isUserExist = await User.findAll({
-              where: {
-                email: body.email
-              },
-              include: [Plan, PaymentMethods]
-            });
-
-            // Create Subscription with one Day trial Period
-            const stripeSubscriptionResult = await PaymentController().createSubscriptionCharge(
-              isUserExist[0]
-            );
-
-            console.log("stripeSubscriptionResult", stripeSubscriptionResult);
-
-            if (stripeSubscriptionResult.result) {
-              return res.status(200).json({
-                success: true,
-                token,
-                user: isUserExist[0]
-              });
-            } else if (stripeSubscriptionResult.error) {
-              return res.status(500).json({
-                success: false,
-                error:
-                  "There is some error while saving your card details. Please try after sometime or connect to customer support",
-                err: stripeSubscriptionResult
-              });
-            }
-          } catch (err) {
-            return res.status(500).json({
-              success: false,
-              error:
-                "There is some error while saving your card details. Please try after sometime or connect to customer support",
-              err: err
-            });
-          }
-        
+          
       } catch (err) {
+        console.log('error in UserController register method: ', err)
         return res
           .status(500)
           .json({ success: false, error: "Internal Server Error", err: err });
       }
-    } else if (body.password !== body.confirmPassword) {
+    } else{
       return res
         .status(400)
-        .json({ success: false, error: "Bad Request: Passwords don't match" });
+        .json({ success: false, error: "Passwords don't match" });
     }
   };
 
@@ -149,7 +113,7 @@ const UserController = () => {
         });
 
         if (!user.length) {
-          return res.status(400).json({ msg: "Bad Request: User not found" });
+          return res.status(400).json({ msg: "User not found" });
         }
 
         if (bcryptService().comparePassword(password, user[0].password)) {
@@ -166,7 +130,7 @@ const UserController = () => {
 
     return res
       .status(400)
-      .json({ msg: "Bad Request: Email or password is wrong" });
+      .json({ msg: "Email or password is wrong" });
   };
 
   const validate = async (req, res) => {
