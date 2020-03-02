@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import swal from 'sweetalert';
 import styled from 'styled-components';
-import useLogin from '../../state/auth/hooks/useLogin';
+import useOrganization from '../../state/organization/hooks/useOrganization';
 import BannerBackground from '../../assets/images/bannerBackground.svg';
 import Spinner from '../../components/spinner';
 import Button from '../../components/button';
 import FormContainer from './containers/FormContainer';
-import Form from './containers/form';
+import history from '../../utils/history';
 
 const Main = styled.div`
   display: flex;
@@ -64,43 +65,73 @@ const Table = styled.table`
 `;
 
 const Account = () => {
-  const { auth, updateUser, toggleSubscription, isLoading } = useLogin();
-  console.log(auth.user)
+  const { organization, getusers, deleteUserService, isLoading } = useOrganization();
+
+  useEffect(() => {
+    getusers();
+  }, []);
+
+  const gotoAdduser = () => {
+    history.push('organization/add-user');
+  }
+
+  const gotoUpdate = (userId) => {
+    history.push(`organization/users/${userId}`);
+  }
+
+  const deleteUser = (user) => {
+   swal({
+    title: "Are you sure?",
+    text: "Once deleted, you will not be able to recover this user!",
+    icon: "warning",
+    buttons: true,
+    dangerMode: true,
+  })
+  .then((willDelete) => {
+    if (willDelete) {
+      confirmDelete(user);
+    } else {
+      swal("Your user is safe!");
+    }
+  });
+  }
+  const confirmDelete = (user) => {
+    deleteUserService(user.id);
+   }
+
   return (
     <Main>
       <Spinner show={isLoading} />
       <BannerBackgroundContainer src={BannerBackground} alt="banner background" />
-      <Title>Manage your account</Title>
+      <Title>Manage your organization users</Title>
       <Container>
         <FormContainer>
-          <SubTitle>Personal Detail</SubTitle>
-            <Form
-              onSubmit={updateUser}
-              error={auth.error}
-              user={auth.user}
-            />
-        </FormContainer>
-        <FormContainer>
-          <SubTitle>Your Cards</SubTitle>
+        <StyledButton onClick={gotoAdduser}>Add user</StyledButton>
+          <SubTitle>Users</SubTitle>
           <Table>
             <thead>
               <tr>
-                <th>Card Number</th>
-                <th>Expiry</th>
-                <th>Customer Name</th>
+                <th>#</th>
+                <th>name</th>
+                <th>Email</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {auth.user.PaymentMethods.map((card, key) => {
+              {organization.users && organization.users.map((user, key) => {
                 return <tr>
-                  <td>{card.last4}</td>
-                  <td>{`${card.exp_month}/${card.exp_year}`}</td>
-                  <td>{auth.user.name}</td>
+                  <td>{user.id}</td>
+                  <td>{user.name}</td>
+                  <td>{user.email}</td>
+                  <td> 
+                    <StyledButton onClick={() => gotoUpdate(user.id)}>Update</StyledButton>
+                    <StyledButton onClick={() => deleteUser(user)} danger>Delete</StyledButton>
+                  </td>
                 </tr>
               })}
             </tbody>
           </Table>
-          <StyledButton onClick={() => toggleSubscription(!auth.user.subscriptionActive)}>{auth.user.subscriptionActive ? 'Unsubscribe' : 'subscribe'}</StyledButton>
+         
         </FormContainer>
       </Container>
     </Main>

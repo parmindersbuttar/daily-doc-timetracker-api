@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect } from 'react';
 import { Router, Route, Switch } from 'react-router-dom'
 import BaseStyles from './base-styles'
 import history from '../utils/history'
@@ -13,6 +13,9 @@ import ResetPassword from '../views/recoverPassword/ResetPassword'
 import Home from '../views/home'
 import Plans from '../views/plans'
 import Account from '../views/account'
+import Organization from '../views/organization';
+import AddUser from '../views/organization/AddUser';
+import UpdateUser from '../views/organization/UpdateUser';
 import NotFound from '../views/notFound'
 import Features from '../views/features'
 import Downloads from '../views/downloads'
@@ -53,7 +56,10 @@ const Root = props => {
                 path='/reset-password/:token'
                 component={ResetPassword}
               />
-              <PrivateRoute path='/account' component={Account} />
+              <PrivateRoute exact path='/account' component={Account} />
+              <PrivateRoute exact path='/organization' component={Organization} />
+              <PrivateRoute exact path='/organization/add-user' component={AddUser} />
+              <PrivateRoute exact path='/organization/users/:userId' component={UpdateUser} />
               <Route component={NotFound} />
             </Switch>
           </Content>

@@ -86,11 +86,17 @@ const Header = props => {
             <MenuItem>
               <StyledLink to='/sign-in'>Sign In</StyledLink>
             </MenuItem>
-          ) : (
+          ) : (<>
+            {auth.user.role.toLowerCase() === 'organization' &&
+              <MenuItem>
+                <StyledLink to='/organization'>Manage Oraganization</StyledLink>
+              </MenuItem>
+            }
+            
             <MenuItem>
               <StyledLink to='/account'>Manage Account</StyledLink>
             </MenuItem>
-          )}
+          </>)}
         </Menu>
         {auth.logged ? (
           <Button onClick={() => handleLogout()}>Logout</Button>

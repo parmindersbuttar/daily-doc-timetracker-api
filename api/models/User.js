@@ -39,7 +39,7 @@ const User = sequelize.define(
       type: Sequelize.STRING
     },
     postalCode: {
-      type: Sequelize.INTEGER
+      type: Sequelize.STRING
     },
     state: {
       type: Sequelize.STRING
