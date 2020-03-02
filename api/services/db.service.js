@@ -84,7 +84,10 @@ const dbService = (environment, migrate) => {
   const startProd = async () => {
     try {
       await authenticateDB();
-      await startMigrateFalse();
+      if (migrate) {
+        return startMigrateTrue();
+      }
+      // await startMigrateFalse();
     } catch (err) {
       errorDBStart(err);
     }
