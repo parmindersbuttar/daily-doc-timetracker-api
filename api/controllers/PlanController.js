@@ -1,7 +1,6 @@
 const Plan = require("../models/Plan");
 const connection = require("../../config/connection");
-const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
-const stripe = require("stripe")(StripeApi);
+const stripe = require("stripe")(process.env.STRIPESECRETKEY);
 
 const PlanController = () => {
   const createPlan = async (req, res) => {

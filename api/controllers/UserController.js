@@ -5,7 +5,6 @@ const axios = require("axios");
 const url = require("url");
 const uuid = require("uuid");
 const jwt = require("jsonwebtoken");
-const connection = require("../../config/connection");
 const User = require("../models/User");
 const Plan = require("../models/Plan");
 const Note = require("../models/Note");
@@ -14,8 +13,6 @@ const Activity = require("../models/Activity");
 const authService = require("../services/auth.service");
 const bcryptService = require("../services/bcrypt.service");
 const PaymentController = require("../controllers/PaymentController");
-const EMAIL = connection[process.env.NODE_ENV].emailId;
-const EMAILPASSWORD = connection[process.env.NODE_ENV].emailPassword;
 
 const UserController = () => {
   const register = async (req, res) => {
@@ -398,13 +395,13 @@ const UserController = () => {
       port: 587,
       secure: false,
       auth: {
-        user: EMAIL,
-        pass: EMAILPASSWORD
+        user: process.env.EMAILID,
+        pass: process.env.EMAILPASSWORD
       }
     });
 
     const result = await transporter.sendMail({
-      from: `"Scotty Lefkowitz" ${EMAIL}`,
+      from: `"Scotty Lefkowitz" ${process.env.EMAILID}`,
       to: user.email,
       subject: "Reset Password Email",
       text: resetToken,

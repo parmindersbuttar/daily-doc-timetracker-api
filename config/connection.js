@@ -1,12 +1,9 @@
 const development = {
   database: "devtracker",
-  username: "devtracker",
-  password: "DvTr@cK@$",
+  username: "root",
+  password: "Welcome@321",
   host: "localhost",
-  dialect: "mysql",
-  stripeApiKey: process.env.STRIPESECRETKEY,
-  emailId: process.env.EMAILID,
-  emailPassword: process.env.EMAILPASSWORD
+  dialect: "mysql"
 };
 
 const testing = {
@@ -14,10 +11,7 @@ const testing = {
   username: "username",
   password: "password",
   host: "localhost",
-  dialect: "mysql" || "sqlite" || "postgres",
-  stripeApiKey: process.env.STRIPESECRETKEY,
-  emailId: process.env.EMAILID,
-  emailPassword: process.env.EMAILPASSWORD
+  dialect: "mysql" || "sqlite" || "postgres"
 };
 
 const production = {
@@ -25,10 +19,7 @@ const production = {
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   host: process.env.DB_HOST || "localhost",
-  dialect: "mysql" || "sqlite" || "postgres",
-  stripeApiKey: process.env.STRIPESECRETKEY,
-  emailId: process.env.EMAILID,
-  emailPassword: process.env.EMAILPASSWORD
+  dialect: "mysql" || "sqlite" || "postgres"
 };
 
 module.exports = {

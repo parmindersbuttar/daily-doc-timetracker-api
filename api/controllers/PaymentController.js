@@ -1,14 +1,10 @@
 const moment = require("moment");
 const { Op } = require("sequelize");
 const nodemailer = require("nodemailer");
-const connection = require("../../config/connection");
-const StripeApi = connection[process.env.NODE_ENV].stripeApiKey;
-const stripe = require("stripe")(StripeApi);
+const stripe = require("stripe")(process.env.STRIPESECRETKEY);
 const User = require("../models/User");
 const Plan = require("../models/Plan");
 const PaymentMethods = require("../models/PaymentMethods");
-const EMAIL = connection[process.env.NODE_ENV].emailId;
-const EMAILPASSWORD = connection[process.env.NODE_ENV].emailPassword;
 
 const PaymentController = () => {
   const createCustomer = async body => {
@@ -104,13 +100,13 @@ const PaymentController = () => {
       port: 587,
       secure: false,
       auth: {
-        user: EMAIL,
-        pass: EMAILPASSWORD
+        user: process.env.EMAILID,
+        pass: process.env.EMAILPASSWORD
       }
     });
 
     await transporter.sendMail({
-      from: `"Scotty Lefkowitz" ${EMAIL}`,
+      from: `"Scotty Lefkowitz" ${process.env.EMAILID}`,
       to: user.email,
       subject: "Subscription Payment",
       text: "",
