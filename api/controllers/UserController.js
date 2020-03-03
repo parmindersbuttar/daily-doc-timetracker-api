@@ -32,68 +32,84 @@ const UserController = () => {
         });
 
         if (existingUser) {
-          return res.status(400).json({ error: "User with this email address already registered" });
+          return res
+            .status(400)
+            .json({ error: "User with this email address already registered" });
         }
 
         const selectedPlan = await Plan.findByPk(body.planId);
-        if(!selectedPlan) {
-          return res.status(500).json({ error: "Something went wrong. Please connect service support." });
+        if (!selectedPlan) {
+          return res.status(500).json({
+            error: "Something went wrong. Please connect service support."
+          });
         }
-         
-            // Create Stripe Customer
-            const resultCustomer = await PaymentController().createCustomer(body);
-            if (resultCustomer.hasOwnProperty("id")) {
-              // Add user to DB
-              user = await User.create({
-                name: body.name,
-                email: body.email,
-                password: body.password,
-                planId: body.planId,
-                premium: false,
-                stripeCustomerId: resultCustomer.id,
-                addressLine1: body.addressLine1,
-                postalCode: body.postalCode,
-                state: body.state,
-                country: body.country,
-                role: selectedPlan.role
-              });
 
-              let token = authService().issue({ id: user.id });
+        // Create Stripe Customer
+        const resultCustomer = await PaymentController().createCustomer(body);
+        if (resultCustomer.hasOwnProperty("id")) {
+          // Add user to DB
+          user = await User.create({
+            name: body.name,
+            email: body.email,
+            password: body.password,
+            planId: body.planId,
+            premium: false,
+            stripeCustomerId: resultCustomer.id,
+            addressLine1: body.addressLine1,
+            postalCode: body.postalCode,
+            state: body.state,
+            country: body.country,
+            role: selectedPlan.role
+          });
 
-              const stripeSubscriptionResult = await PaymentController().createSubscriptionCharge(user, selectedPlan, body.card.id);
+          let token = authService().issue({ id: user.id });
 
-              // Add payment Method to DB
-              await PaymentMethods.create({
-                name: card.name,
-                type: card.type,
-                active: 1,
-                last4: card.last4,
-                exp_month: card.exp_month,
-                exp_year: card.exp_year,
-                brand: card.brand,
-                UserId: user.id,
-                source: body.card.id
-              });
-              return res.status(200).json({
-                success: true,
-                token,
-                user: user
-              });
-            } else {
-              return res.status(500).json({
-                success: false,
-                error:
-                  "There is some error while saving your card details. Please try after sometime or connect to customer support"
-              });
-            }
-          
+          const stripeSubscriptionResult = await PaymentController().createSubscriptionCharge(
+            user,
+            selectedPlan,
+            body.card.id
+          );
+
+          // Add payment Method to DB
+          await PaymentMethods.create({
+            name: card.name,
+            type: card.type,
+            active: 1,
+            last4: card.last4,
+            exp_month: card.exp_month,
+            exp_year: card.exp_year,
+            brand: card.brand,
+            UserId: user.id,
+            source: body.card.id
+          });
+
+          const updatedUser = await User.findByPk(user.id);
+
+          PaymentController().sendSubscriptionEmail(
+            stripeSubscriptionResult,
+            updatedUser,
+            "trial"
+          );
+
+          return res.status(200).json({
+            success: true,
+            token,
+            user: user
+          });
+        } else {
+          return res.status(500).json({
+            success: false,
+            error:
+              "There is some error while saving your card details. Please try after sometime or connect to customer support"
+          });
+        }
       } catch (err) {
-        console.log('error in UserController register method: ', err)
+        console.log("error in UserController register method: ", err);
         return res
           .status(500)
           .json({ success: false, error: "Internal Server Error", err: err });
       }
-    } else{
+    } else {
       return res
         .status(400)
         .json({ success: false, error: "Passwords don't match" });
@@ -128,9 +144,7 @@ const UserController = () => {
       }
     }
 
-    return res
-      .status(400)
-      .json({ msg: "Email or password is wrong" });
+    return res.status(400).json({ msg: "Email or password is wrong" });
   };
 
   const validate = async (req, res) => {

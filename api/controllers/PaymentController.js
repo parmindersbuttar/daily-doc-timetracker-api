@@ -58,6 +58,9 @@ const PaymentController = () => {
   };
 
   const sendSubscriptionEmail = async (data, user, type) => {
+    const { result } = data;
+    const amount =
+      result && result.id ? (result.plan.amount / 100) * result.quantity : 0;
     const transporter = await nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
@@ -74,14 +77,16 @@ const PaymentController = () => {
       to: user.email,
       subject: "Subscription Payment",
       text: "",
-      html: `
+      html: ` 
         <b> ${
           type === "trial"
             ? "Your Trial Plan expired by " +
               user.planExpiryDate +
-              " and Amount will be deducted for Paid Subscription"
-            : data.id
-            ? "Your Payment for this month has been deducted"
+              " and Amount " +
+              amount +
+              " $ will be deducted for Paid Subscription"
+            : result && result.id
+            ? "Your Payment " + amount + " $ for this month has been deducted"
             : "Error : " + data
         }</b>
       `
@@ -147,33 +152,34 @@ const PaymentController = () => {
   };
 
   const setwebhookEndpoints = async () => {
-    const isWebHook = await stripe.webhookEndpoints.list();
-    if (!isWebHook.data.length) {
-      const createHook = await stripe.webhookEndpoints.create({
-        url: "/public/webhook-charge",
-        enabled_events: ["charge.failed", "charge.succeeded"]
-      });
-      console.log("createHook", createHook);
-      if (createHook.id) {
-        console.log("createHookSuccess - Webhook created");
+    try {
+      const isWebHook = await stripe.webhookEndpoints.list();
+      if (!isWebHook.data.length) {
+        const serverUrl = `${process.env.SERVER_URL}/public/webhook-charge`;
+        const createHook = await stripe.webhookEndpoints.create({
+          url: serverUrl,
+          enabled_events: ["charge.failed", "charge.succeeded"]
+        });
+        if (createHook.id) {
+          console.log("createHookSuccess - Webhook created");
+        }
       }
+    } catch (err) {
+      console.log(err);
     }
   };
 
   const stripePaymentWebhookEvents = async (req, res) => {
     let event = req.body;
     try {
-      console.log(event.type, event.data.object);
+      console.log(event.type);
       switch (event.type) {
         case "charge.succeeded":
           const paymentIntent = event.data.object;
-          // Then define and call a method to handle the successful payment intent.
           handlePaymentIntentSucceeded(paymentIntent);
           break;
 
-        // ... handle other event types
         default:
-          // Unexpected event type
           return res.status(400).end({ success: false });
       }
 
@@ -204,75 +210,90 @@ const PaymentController = () => {
     if (email && email !== null) {
       const updatedUser = await User.update(
         { planExpiryDate: expiryDate },
-        { where: { email } }
+        { where: { email: email } }
       );
 
-      console.log("Paid Subscription expiryDate updated", updatedUser);
+      const newUpdatedUser = await User.findOne({ where: { email: email } });
+
+      if (updatedUser[0] > 0) {
+        await sendSubscriptionEmail(
+          { result: newSubData },
+          newUpdatedUser,
+          "paid"
+        );
+      }
+
+      console.log(
+        "Paid Subscription expiryDate updated",
+        updatedUser,
+        newSubData
+      );
     }
   };
 
-  const updateOrganizationSubscription = async (newUser, orgUser) => {
-    // console.log("orgUser", orgUser);
-    try {
-      const subscriptionId = orgUser.subscriptionId;
-      const subscriptionDetails = await stripe.subscriptions.retrieve(
-        subscriptionId
-      );
+  // const updateOrganizationSubscription = async (newUser, orgUser) => {
+  //   // console.log("orgUser", orgUser);
+  //   try {
+  //     const subscriptionId = orgUser.subscriptionId;
+  //     const subscriptionDetails = await stripe.subscriptions.retrieve(
+  //       subscriptionId
+  //     );
 
-      console.log("subscriptionDetails", subscriptionDetails);
-      const updatedSubscription = await stripe.subscriptions.update(
-        subscriptionId,
-        {
-          quantity: subscriptionDetails.quantity + 1
-        }
-      );
+  //     console.log("subscriptionDetails", subscriptionDetails);
+  //     const updatedSubscription = await stripe.subscriptions.update(
+  //       subscriptionId,
+  //       {
+  //         quantity: subscriptionDetails.quantity + 1
+  //       }
+  //     );
 
-      console.log("updatedSubscription", updatedSubscription);
+  //     console.log("updatedSubscription", updatedSubscription);
 
-      const expiryEpoch = updatedSubscription.current_period_end;
+  //     const expiryEpoch = updatedSubscription.current_period_end;
 
-      const expiryDate = moment.unix(expiryEpoch).format("YYYY-MM-DD HH:mm:ss");
+  //     const expiryDate = moment.unix(expiryEpoch).format("YYYY-MM-DD HH:mm:ss");
 
-      const updatedUser = await User.update(
-        {
-          planExpiryDate: expiryDate,
-          premium: true
-        },
-        {
-          where: {
-            id: newUser.id
-          }
-        }
-      );
+  //     const updatedUser = await User.update(
+  //       {
+  //         planExpiryDate: expiryDate,
+  //         premium: true
+  //       },
+  //       {
+  //         where: {
+  //           id: newUser.id
+  //         }
+  //       }
+  //     );
 
-      // const newUpdatedUser = await User.findByPk(newUser.id);
+  //     // const newUpdatedUser = await User.findByPk(newUser.id);
 
-      // if (updatedUser[0] > 0) {
-      //   await sendSubscriptionEmail(
-      //     stripeSubscription,
-      //     newUpdatedUser,
-      //     "paid"
-      //   );
-      // }
+  //     // if (updatedUser[0] > 0) {
+  //     //   await sendSubscriptionEmail(
+  //     //     stripeSubscription,
+  //     //     newUpdatedUser,
+  //     //     "paid"
+  //     //   );
+  //     // }
 
-      return { result: updatedSubscription };
-    } catch (err) {
-      console.log(err);
-      return {
-        error: err,
-        user: newUser,
-        orgUser: orgUser
-      };
-    }
-  };
+  //     return { result: updatedSubscription };
+  //   } catch (err) {
+  //     console.log(err);
+  //     return {
+  //       error: err,
+  //       user: newUser,
+  //       orgUser: orgUser
+  //     };
+  //   }
+  // };
 
   return {
     createCustomer,
     createSubscriptionCharge,
-    updateOrganizationSubscription,
+    // updateOrganizationSubscription,
     toggleSubscription,
     stripePaymentWebhookEvents,
-    setwebhookEndpoints
+    setwebhookEndpoints,
+    sendSubscriptionEmail
   };
 };
 

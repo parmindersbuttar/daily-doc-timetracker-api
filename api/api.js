@@ -1,7 +1,7 @@
 /**
  * third party libraries
  */
-require('dotenv').config()
+require("dotenv").config();
 const bodyParser = require("body-parser");
 const express = require("express");
 const helmet = require("helmet");
@@ -59,11 +59,9 @@ app.get("*", (req, res) => {
 });
 
 const PaymentController = require("./controllers/PaymentController");
-PaymentController().setwebhookEndpoints()
-
+PaymentController().setwebhookEndpoints();
 
 server.listen(config.port, () => {
-
   if (
     environment !== "production" &&
     environment !== "development" &&
