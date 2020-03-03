@@ -1,7 +1,7 @@
 const development = {
   database: "devtracker",
-  username: "devtracker",
-  password: "DvTr@cK@$",
+  username: "root",
+  password: "Welcome@321",
   host: "localhost",
   dialect: "mysql"
 };

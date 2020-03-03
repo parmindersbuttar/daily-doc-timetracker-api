@@ -91,8 +91,6 @@ const OrganizationController = () => {
         organization.subscriptionId
       );
 
-      console.log('subscriptionDetails',subscriptionDetails)
-
       await stripe.subscriptions.update(organization.subscriptionId, {
         quantity: subscriptionDetails.quantity + 1
       });
@@ -114,6 +112,15 @@ const OrganizationController = () => {
         where: {
           id: req.params.userId
         }
+      });
+      const organization = await User.findByPk(req.token.id);
+
+      const subscriptionDetails = await stripe.subscriptions.retrieve(
+        organization.subscriptionId
+      );
+
+      await stripe.subscriptions.update(organization.subscriptionId, {
+        quantity: subscriptionDetails.quantity - 1
       });
       return res.status(200).json({ success: true });
     } catch (err) {
