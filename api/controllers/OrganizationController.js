@@ -2,6 +2,7 @@ const User = require("../models/User");
 const emailService = require("../services/mail.service");
 const url = require("url");
 const stripe = require("stripe")(process.env.STRIPESECRETKEY);
+const PaymentController = require("../controllers/PaymentController");
 
 const OrganizationController = () => {
   const get = async (req, res) => {
@@ -91,15 +92,25 @@ const OrganizationController = () => {
         organization.subscriptionId
       );
 
-      await stripe.subscriptions.update(organization.subscriptionId, {
-        quantity: subscriptionDetails.quantity + 1
-      });
+      const subscriptionUpdated = await stripe.subscriptions.update(
+        organization.subscriptionId,
+        {
+          quantity: subscriptionDetails.quantity + 1
+        }
+      );
 
       const webUrl = url.format({
         protocol: req.protocol,
         host: req.get("host")
       });
       emailService().sendEmail(webUrl, user);
+
+      // Send Update Subscription Email
+      PaymentController().sendSubscriptionEmail(
+        { result: subscriptionUpdated },
+        organization,
+        "organizationSubsUpdate"
+      );
       return res.status(200).json({ success: true });
     } catch (err) {
       console.log(err);

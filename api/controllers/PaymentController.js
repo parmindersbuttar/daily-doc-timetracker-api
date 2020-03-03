@@ -58,9 +58,6 @@ const PaymentController = () => {
   };
 
   const sendSubscriptionEmail = async (data, user, type) => {
-    const { result } = data;
-    const amount =
-      result && result.id ? (result.plan.amount / 100) * result.quantity : 0;
     const transporter = await nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
@@ -78,19 +75,34 @@ const PaymentController = () => {
       subject: "Subscription Payment",
       text: "",
       html: ` 
-        <b> ${
-          type === "trial"
-            ? "Your Trial Plan expired by " +
-              user.planExpiryDate +
-              " and Amount " +
-              amount +
-              " $ will be deducted for Paid Subscription"
-            : result && result.id
-            ? "Your Payment " + amount + " $ for this month has been deducted"
-            : "Error : " + data
-        }</b>
+        <b> ${setEmailMessage(type, user, data)}</b>
       `
     });
+  };
+
+  const setEmailMessage = (type, user, data) => {
+    const { result } = data;
+    if (!result) {
+      return "Your Payment has been failed due to Some Error : Error Details" + data;
+    }
+    if (type === "trial") {
+      const amount = result && result.id ? result.plan.amount / 100 : 0;
+      return `Your Trial Plan will be expired by 
+        ${user.planExpiryDate} and Amount 
+        ${amount}
+        $ will be deducted for Paid Subscription`;
+    } else if (type === "organizationSubsUpdate") {
+      const amount = result && result.id ? result.plan.amount / 100 : 0;
+      return (
+        "Your Subscription Payment " +
+        amount +
+        " $ for this month has been deducted"
+      );
+    } else {
+      const amount =
+        result && result.id ? (result.plan.amount / 100) * result.quantity : 0;
+      return "Your Payment " + amount + " $ for this month has been deducted";
+    }
   };
 
   const toggleSubscription = async (req, res) => {
