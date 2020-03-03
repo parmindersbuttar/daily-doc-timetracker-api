@@ -17,13 +17,12 @@ const PaymentController = () => {
       });
       return customer;
     } catch (err) {
-      console.log('error in create stripe customer: ', err)
+      console.log("error in create stripe customer: ", err);
       return err;
     }
   };
 
   const createSubscriptionCharge = async (user, selectedPlan, source) => {
-   
     try {
       const stripeSubscription = await stripe.subscriptions.create({
         customer: user.stripeCustomerId,
@@ -53,7 +52,7 @@ const PaymentController = () => {
 
       return { result: stripeSubscription };
     } catch (err) {
-      console.log('error in create stripe subscription: ', err)
+      console.log("error in create stripe subscription: ", err);
       return err;
     }
   };
@@ -103,7 +102,11 @@ const PaymentController = () => {
         const result = await stripe.subscriptions.del(subscriptionId);
         if (result.hasOwnProperty("id")) {
           const cancelUserSub = await User.update(
-            { subscriptionActive: false, premium: MediaStreamTrackAudioSourceNode, subscriptionId: null },
+            {
+              subscriptionActive: false,
+              premium: MediaStreamTrackAudioSourceNode,
+              subscriptionId: null
+            },
             {
               where: {
                 [Op.or]: [{ id: userId }, { UserId: userId }]
@@ -144,10 +147,17 @@ const PaymentController = () => {
   };
 
   const setwebhookEndpoints = async () => {
-    await stripe.webhookEndpoints.create({
-      url: "/public/webhook-charge",
-      enabled_events: ["charge.failed", "charge.succeeded"]
-    });
+    const isWebHook = await stripe.webhookEndpoints.list();
+    if (!isWebHook.data.length) {
+      const createHook = await stripe.webhookEndpoints.create({
+        url: "/public/webhook-charge",
+        enabled_events: ["charge.failed", "charge.succeeded"]
+      });
+      console.log("createHook", createHook);
+      if (createHook.id) {
+        console.log("createHookSuccess - Webhook created");
+      }
+    }
   };
 
   const stripePaymentWebhookEvents = async (req, res) => {
@@ -261,7 +271,8 @@ const PaymentController = () => {
     createSubscriptionCharge,
     updateOrganizationSubscription,
     toggleSubscription,
-    stripePaymentWebhookEvents
+    stripePaymentWebhookEvents,
+    setwebhookEndpoints
   };
 };
 

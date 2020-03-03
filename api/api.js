@@ -58,6 +58,10 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build/index.html"));
 });
 
+const PaymentController = require("./controllers/PaymentController");
+PaymentController().setwebhookEndpoints()
+
+
 server.listen(config.port, () => {
 
   if (
