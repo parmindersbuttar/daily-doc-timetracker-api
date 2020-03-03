@@ -104,13 +104,6 @@ const OrganizationController = () => {
         host: req.get("host")
       });
       emailService().sendEmail(webUrl, user);
-
-      // Send Update Subscription Email
-      PaymentController().sendSubscriptionEmail(
-        { result: subscriptionUpdated },
-        organization,
-        "organizationSubsUpdate"
-      );
       return res.status(200).json({ success: true });
     } catch (err) {
       console.log(err);
@@ -130,9 +123,13 @@ const OrganizationController = () => {
         organization.subscriptionId
       );
 
-      await stripe.subscriptions.update(organization.subscriptionId, {
-        quantity: subscriptionDetails.quantity - 1
-      });
+      await stripe.subscriptions.update(
+        organization.subscriptionId,
+        {
+          quantity: subscriptionDetails.quantity - 1
+        }
+      );
+
       return res.status(200).json({ success: true });
     } catch (err) {
       console.log(err);

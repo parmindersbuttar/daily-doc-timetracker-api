@@ -82,22 +82,23 @@ const PaymentController = () => {
 
   const setEmailMessage = (type, user, data) => {
     const { result } = data;
+    console.log(result);
     if (!result) {
-      return "Your Payment has been failed due to Some Error : Error Details" + data;
-    }
-    if (type === "trial") {
+      return (
+        "Your Payment has been failed due to Some Error : Error Details - " +
+        JSON.stringify(data)
+      );
+    } else if (result && result.id && result.status !== "succeeded" && result.status !== "trialing") {
+      return (
+        "Your Payment has been failed due to Some Error : Error Details-" +
+        JSON.stringify(result)
+      );
+    } else if (type === "trial") {
       const amount = result && result.id ? result.plan.amount / 100 : 0;
       return `Your Trial Plan will be expired by 
         ${user.planExpiryDate} and Amount 
         ${amount}
         $ will be deducted for Paid Subscription`;
-    } else if (type === "organizationSubsUpdate") {
-      const amount = result && result.id ? result.plan.amount / 100 : 0;
-      return (
-        "Your Subscription Payment " +
-        amount +
-        " $ for this month has been deducted"
-      );
     } else {
       const amount =
         result && result.id ? (result.plan.amount / 100) * result.quantity : 0;
@@ -191,6 +192,11 @@ const PaymentController = () => {
           handlePaymentIntentSucceeded(paymentIntent);
           break;
 
+        case "charge.failed":
+          const paymentFailedIntent = event.data.object;
+          handlePaymentIntentFailed(paymentFailedIntent);
+          break;
+
         default:
           return res.status(400).end({ success: false });
       }
@@ -243,65 +249,28 @@ const PaymentController = () => {
     }
   };
 
-  // const updateOrganizationSubscription = async (newUser, orgUser) => {
-  //   // console.log("orgUser", orgUser);
-  //   try {
-  //     const subscriptionId = orgUser.subscriptionId;
-  //     const subscriptionDetails = await stripe.subscriptions.retrieve(
-  //       subscriptionId
-  //     );
+  const handlePaymentIntentFailed = async failedRes => {
+    console.log("Webhook failedRes.customer", failedRes.customer);
+    const customerDetails = await stripe.customers.retrieve(failedRes.customer);
 
-  //     console.log("subscriptionDetails", subscriptionDetails);
-  //     const updatedSubscription = await stripe.subscriptions.update(
-  //       subscriptionId,
-  //       {
-  //         quantity: subscriptionDetails.quantity + 1
-  //       }
-  //     );
+    const email = customerDetails.email;
 
-  //     console.log("updatedSubscription", updatedSubscription);
+    //New data of subscription
+    const newFailedSubData =
+      customerDetails.subscriptions.data[
+        customerDetails.subscriptions.total_count - 1
+      ];
 
-  //     const expiryEpoch = updatedSubscription.current_period_end;
+    const user = await User.findOne({ where: { email } });
 
-  //     const expiryDate = moment.unix(expiryEpoch).format("YYYY-MM-DD HH:mm:ss");
+    await sendSubscriptionEmail({ result: newFailedSubData }, user, "paid");
 
-  //     const updatedUser = await User.update(
-  //       {
-  //         planExpiryDate: expiryDate,
-  //         premium: true
-  //       },
-  //       {
-  //         where: {
-  //           id: newUser.id
-  //         }
-  //       }
-  //     );
-
-  //     // const newUpdatedUser = await User.findByPk(newUser.id);
-
-  //     // if (updatedUser[0] > 0) {
-  //     //   await sendSubscriptionEmail(
-  //     //     stripeSubscription,
-  //     //     newUpdatedUser,
-  //     //     "paid"
-  //     //   );
-  //     // }
-
-  //     return { result: updatedSubscription };
-  //   } catch (err) {
-  //     console.log(err);
-  //     return {
-  //       error: err,
-  //       user: newUser,
-  //       orgUser: orgUser
-  //     };
-  //   }
-  // };
+    console.log("Subscription Payment Failed");
+  };
 
   return {
     createCustomer,
     createSubscriptionCharge,
-    // updateOrganizationSubscription,
     toggleSubscription,
     stripePaymentWebhookEvents,
     setwebhookEndpoints,
