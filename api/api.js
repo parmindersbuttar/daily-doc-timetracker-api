@@ -58,6 +58,7 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build/index.html"));
 });
 
+console.log('Api',process.env.EMAIL_ID, process.env.EMAIL_PASSWORD,process.env.SERVER_URL);
 const PaymentController = require("./controllers/PaymentController");
 PaymentController().setwebhookEndpoints();
 

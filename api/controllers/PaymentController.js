@@ -1,7 +1,7 @@
 const moment = require("moment");
 const { Op } = require("sequelize");
 const nodemailer = require("nodemailer");
-const stripe = require("stripe")(process.env.STRIPESECRETKEY);
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const User = require("../models/User");
 const Plan = require("../models/Plan");
 const PaymentMethods = require("../models/PaymentMethods");
@@ -58,19 +58,20 @@ const PaymentController = () => {
   };
 
   const sendSubscriptionEmail = async (data, user, type) => {
+    console.log(process.env.EMAIL_ID, process.env.EMAIL_PASSWORD);
     const transporter = await nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
       port: 587,
       secure: false,
       auth: {
-        user: process.env.EMAILID,
-        pass: process.env.EMAILPASSWORD
+        user: process.env.EMAIL_ID,
+        pass: process.env.EMAIL_PASSWORD
       }
     });
 
     await transporter.sendMail({
-      from: `"Scotty Lefkowitz" ${process.env.EMAILID}`,
+      from: `"Scotty Lefkowitz" ${process.env.EMAIL_ID}`,
       to: user.email,
       subject: "Subscription Payment",
       text: "",
@@ -88,7 +89,12 @@ const PaymentController = () => {
         "Your Payment has been failed due to Some Error : Error Details - " +
         JSON.stringify(data)
       );
-    } else if (result && result.id && result.status !== "succeeded" && result.status !== "trialing") {
+    } else if (
+      result &&
+      result.id &&
+      result.status !== "succeeded" &&
+      result.status !== "trialing"
+    ) {
       return (
         "Your Payment has been failed due to Some Error : Error Details-" +
         JSON.stringify(result)
@@ -165,6 +171,7 @@ const PaymentController = () => {
   };
 
   const setwebhookEndpoints = async () => {
+    console.log("process.env.SERVER_URL", process.env.SERVER_URL);
     try {
       const isWebHook = await stripe.webhookEndpoints.list();
       if (!isWebHook.data.length) {

@@ -1,8 +1,7 @@
 const User = require("../models/User");
 const emailService = require("../services/mail.service");
 const url = require("url");
-const stripe = require("stripe")(process.env.STRIPESECRETKEY);
-const PaymentController = require("../controllers/PaymentController");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const OrganizationController = () => {
   const get = async (req, res) => {

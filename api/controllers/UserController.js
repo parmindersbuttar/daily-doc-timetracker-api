@@ -290,20 +290,21 @@ const UserController = () => {
   };
 
   const sendEmail = async (req, user, resetToken) => {
+    console.log(process.env.EMAIL_ID, process.env.EMAIL_PASSWORD);
     const url = getURL(req);
     const transporter = await nodemailer.createTransport({
       service: "gmail",
-      host: "smtp.ethereal.email",
+      host: "smtp.gmail.com",
       port: 587,
       secure: false,
       auth: {
-        user: process.env.EMAILID,
-        pass: process.env.EMAILPASSWORD
+        user: process.env.EMAIL_ID,
+        pass: process.env.EMAIL_PASSWORD
       }
     });
 
     const result = await transporter.sendMail({
-      from: `"Scotty Lefkowitz" ${process.env.EMAILID}`,
+      from: `"Scotty Lefkowitz" ${process.env.EMAIL_ID}`,
       to: user.email,
       subject: "Reset Password Email",
       text: resetToken,
