@@ -176,7 +176,7 @@ const PaymentController = () => {
       const isWebHook = await stripe.webhookEndpoints.list();
       if (!isWebHook.data.length) {
         const serverUrl = `${
-          process.env === "production"
+          process.env.NODE_ENV === "production"
             ? process.env.SERVER_URL
             : "https://530312e0.ngrok.io"
         }/public/webhook-charge`;
