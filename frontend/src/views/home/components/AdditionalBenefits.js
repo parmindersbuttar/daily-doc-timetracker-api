@@ -98,7 +98,7 @@ const AdditionalBenefits = () => {
     <Main>
         <Heading>Additional Benefits </Heading>
           <Container>
-              {items.map((item, key) => {
+              {items && items.map((item, key) => {
                   return (
                       <Paper key={key}>
                           <Figure>

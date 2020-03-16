@@ -118,7 +118,7 @@ const Account = () => {
               </tr>
             </thead>
             <tbody>
-              {organization.users && organization.users.map((user, key) => {
+              {organization && organization.users && organization.users.map((user, key) => {
                 return <tr>
                   <td>{user.id}</td>
                   <td>{user.name}</td>

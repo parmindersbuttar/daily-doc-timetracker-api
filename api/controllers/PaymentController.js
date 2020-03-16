@@ -93,7 +93,8 @@ const PaymentController = () => {
       result &&
       result.id &&
       result.status !== "succeeded" &&
-      result.status !== "trialing"
+      result.status !== "trialing" &&
+      result.status !== "active"
     ) {
       return (
         "Your Payment has been failed due to Some Error : Error Details-" +
@@ -128,8 +129,9 @@ const PaymentController = () => {
           const cancelUserSub = await User.update(
             {
               subscriptionActive: false,
-              premium: MediaStreamTrackAudioSourceNode,
-              subscriptionId: null
+              premium: false,
+              subscriptionId: null,
+              planExpiryDate: moment(new Date()).add(-1, "days")
             },
             {
               where: {
@@ -146,21 +148,20 @@ const PaymentController = () => {
         }
       } else {
         // Re-subscribe Subscription
-        const stripeNewSubscriptionResult = await createSubscriptionCharge(
-          user
-        );
-
-        if (stripeNewSubscriptionResult.result) {
-          return res.status(200).json({
-            success: true,
-            msg: "Subscription Activated Successfully"
-          });
-        } else if (stripeNewSubscriptionResult.error) {
-          return res.status(500).json({
-            success: false,
-            err: error.raw ? error.raw.message : error
-          });
-        }
+        // const stripeNewSubscriptionResult = await createSubscriptionCharge(
+        //   user
+        // );
+        // if (stripeNewSubscriptionResult.result) {
+        //   return res.status(200).json({
+        //     success: true,
+        //     msg: "Subscription Activated Successfully"
+        //   });
+        // } else if (stripeNewSubscriptionResult.error) {
+        //   return res.status(500).json({
+        //     success: false,
+        //     err: error.raw ? error.raw.message : error
+        //   });
+        // }
       }
     } catch (error) {
       console.log(error);
@@ -171,11 +172,14 @@ const PaymentController = () => {
   };
 
   const setwebhookEndpoints = async () => {
-    console.log("process.env.SERVER_URL", process.env.SERVER_URL);
     try {
       const isWebHook = await stripe.webhookEndpoints.list();
       if (!isWebHook.data.length) {
-        const serverUrl = `${process.env.SERVER_URL}/public/webhook-charge`;
+        const serverUrl = `${
+          process.env === "production"
+            ? process.env.SERVER_URL
+            : "https://530312e0.ngrok.io"
+        }/public/webhook-charge`;
         const createHook = await stripe.webhookEndpoints.create({
           url: serverUrl,
           enabled_events: ["charge.failed", "charge.succeeded"]

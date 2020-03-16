@@ -1,16 +1,16 @@
-import React from 'react';
-import styled from 'styled-components';
-import useLogin from '../../state/auth/hooks/useLogin';
-import BannerBackground from '../../assets/images/bannerBackground.svg';
-import Spinner from '../../components/spinner';
-import Button from '../../components/button';
-import FormContainer from './containers/FormContainer';
-import Form from './containers/form';
+import React from "react";
+import styled from "styled-components";
+import useLogin from "../../state/auth/hooks/useLogin";
+import BannerBackground from "../../assets/images/bannerBackground.svg";
+import Spinner from "../../components/spinner";
+import Button from "../../components/button";
+import FormContainer from "./containers/FormContainer";
+import Form from "./containers/form";
 
 const Main = styled.div`
   display: flex;
   padding: 30px;
-  flex-direction: column
+  flex-direction: column;
 `;
 
 const Container = styled.div`
@@ -31,7 +31,7 @@ const Title = styled.h1`
   font-size: 50px;
   line-height: 61px;
   letter-spacing: 2.77778px;
-  color: #212E4A;
+  color: #212e4a;
   text-align: center;
 `;
 
@@ -40,7 +40,7 @@ const SubTitle = styled.h2`
   font-size: 30px;
   line-height: 61px;
   letter-spacing: 2.77778px;
-  color: #212E4A;
+  color: #212e4a;
   text-align: center;
 `;
 
@@ -56,7 +56,8 @@ const StyledButton = styled(Button)`
 `;
 
 const Table = styled.table`
-  td, th {
+  td,
+  th {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: center;
@@ -65,20 +66,19 @@ const Table = styled.table`
 
 const Account = () => {
   const { auth, updateUser, toggleSubscription, isLoading } = useLogin();
-  console.log(auth.user)
+  console.log(auth.user);
   return (
     <Main>
       <Spinner show={isLoading} />
-      <BannerBackgroundContainer src={BannerBackground} alt="banner background" />
+      <BannerBackgroundContainer
+        src={BannerBackground}
+        alt="banner background"
+      />
       <Title>Manage your account</Title>
       <Container>
         <FormContainer>
           <SubTitle>Personal Detail</SubTitle>
-            <Form
-              onSubmit={updateUser}
-              error={auth.error}
-              user={auth.user}
-            />
+          <Form onSubmit={updateUser} error={auth.error} user={auth.user} />
         </FormContainer>
         <FormContainer>
           <SubTitle>Your Cards</SubTitle>
@@ -91,21 +91,27 @@ const Account = () => {
               </tr>
             </thead>
             <tbody>
-              {auth.user.PaymentMethods.map((card, key) => {
-                return <tr>
-                  <td>{card.last4}</td>
-                  <td>{`${card.exp_month}/${card.exp_year}`}</td>
-                  <td>{auth.user.name}</td>
-                </tr>
-              })}
+              {auth.user && auth.user.PaymentMethods &&
+                auth.user.PaymentMethods.map((card, key) => {
+                  return (
+                    <tr>
+                      <td>{card.last4}</td>
+                      <td>{`${card.exp_month}/${card.exp_year}`}</td>
+                      <td>{auth.user.name}</td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </Table>
-          <StyledButton onClick={() => toggleSubscription(!auth.user.subscriptionActive)}>{auth.user.subscriptionActive ? 'Unsubscribe' : 'subscribe'}</StyledButton>
+          <StyledButton
+            onClick={() => toggleSubscription(!auth.user.subscriptionActive)}
+          >
+            {auth.user && auth.user.subscriptionActive ? "Unsubscribe" : "subscribe"}
+          </StyledButton>
         </FormContainer>
       </Container>
     </Main>
-    
-  )
+  );
 };
 
 export default Account;

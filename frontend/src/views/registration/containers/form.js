@@ -159,7 +159,7 @@ const LoginForm = props => {
             value={formik.values.planId}
         >
           <option value=''>Select a plan</option>
-          {plans.map(plan => {
+          {plans && plans.map(plan => {
             return (
               <option key={plan.id} value={plan.id}>{`${plan.name} ${plan.description}`}</option>
             );    

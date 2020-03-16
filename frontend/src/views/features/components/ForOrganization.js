@@ -88,7 +88,7 @@ const ForOrganization = () => {
             For organizations
         </Heading>
         <CardContainer>
-            {items.map((item, key) => { 
+            {items && items.map((item, key) => { 
                 return (<Box key={key}>
                     <Card>
                         <CardImage src={item.image} alt={item.title} />

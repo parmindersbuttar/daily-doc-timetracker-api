@@ -125,7 +125,7 @@ const Plans = () => {
         Flexible plans to meet your time management needs.
       </Description>
       <PlanContainer>
-        {plans.data &&
+        {plans && plans.data &&
           plans.data.map(plan => {
             return (
               <PlanBox key={plan.id}>

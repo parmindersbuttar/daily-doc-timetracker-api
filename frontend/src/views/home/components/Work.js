@@ -89,7 +89,7 @@ const Work = () => {
           {item &&
               <Container>
                   <List>
-                      {features.map((feature, key) => {
+                      {features && features.map((feature, key) => {
                           return (
                               <ListItem
                                   key={key}
